@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../components/Screen";
@@ -37,10 +37,8 @@ export default function LoginScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={[styles.scroll, webMaxWidth(460)]} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
-            <View style={styles.logo}>
-              <Ionicons name="flash" size={32} color={colors.ink} />
-            </View>
-            <Text style={styles.appName}>Edge System</Text>
+            <Image source={require("../../assets/images/logo.png")} style={styles.logo} />
+            <Text style={styles.appName}>Western Information Network</Text>
             <Text style={styles.tagline}>Find the edge. Track the results.</Text>
           </View>
 
@@ -91,10 +89,10 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: "center", paddingHorizontal: spacing.xl, paddingVertical: spacing.xxxl },
   brand: { alignItems: "center", marginBottom: spacing.xxxl },
   logo: {
-    width: 72, height: 72, borderRadius: radius.xl, backgroundColor: colors.gold,
-    alignItems: "center", justifyContent: "center", marginBottom: spacing.lg,
+    width: 84, height: 84, borderRadius: radius.xl, marginBottom: spacing.lg,
+    borderWidth: 1, borderColor: colors.border,
   },
-  appName: { color: colors.text, fontSize: font.h1, fontWeight: font.heavy, letterSpacing: -0.5 },
+  appName: { color: colors.text, fontSize: font.h2, fontWeight: font.heavy, letterSpacing: -0.3, textAlign: "center" },
   tagline: { color: colors.textDim, fontSize: font.small, marginTop: 4 },
   heading: { color: colors.text, fontSize: font.h2, fontWeight: font.heavy },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: 4 },

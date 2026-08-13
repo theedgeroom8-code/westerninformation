@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { useRouter, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthStore } from "../store/authStore";
@@ -31,11 +31,9 @@ export function WebSidebar({ unread }: { unread: number }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.brand}>
-        <View style={styles.logo}>
-          <Ionicons name="flash" size={20} color={colors.ink} />
-        </View>
-        <View>
-          <Text style={styles.brandName}>Edge System</Text>
+        <Image source={require("../assets/images/logo.png")} style={styles.logo} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.brandName}>Western Information Network</Text>
           <Text style={styles.brandSub}>Live edge tracker</Text>
         </View>
       </View>
@@ -110,8 +108,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   brand: { flexDirection: "row", alignItems: "center", gap: spacing.md, paddingHorizontal: spacing.md, marginBottom: spacing.xxl },
-  logo: { width: 38, height: 38, borderRadius: radius.md, backgroundColor: colors.gold, alignItems: "center", justifyContent: "center" },
-  brandName: { color: colors.text, fontSize: font.body, fontWeight: font.heavy },
+  logo: { width: 40, height: 40, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border },
+  brandName: { color: colors.text, fontSize: font.small, fontWeight: font.heavy, lineHeight: 17 },
   brandSub: { color: colors.textMuted, fontSize: font.caption, marginTop: 1 },
   nav: { gap: 2 },
   navItem: {

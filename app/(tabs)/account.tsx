@@ -113,7 +113,7 @@ export default function AccountScreen() {
             <View style={styles.divider} />
             <MenuRow icon="document-text" label="Terms & Privacy" onPress={() => notice("Legal", "This tool detects edges only. It does not place bets or hold money.")} />
             <View style={styles.divider} />
-            <MenuRow icon="information-circle" label="About" value="v1.0" onPress={() => notice("Edge System", "Version 1.0 · Live odds engine connected.")} />
+            <MenuRow icon="information-circle" label="About" value="v1.0" onPress={() => notice("Western Information Network", "Version 1.0 · Live odds engine connected.")} />
           </View>
         </FadeIn>
 

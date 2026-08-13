@@ -52,7 +52,7 @@ export default function TwoFactorScreen() {
       }
       const { data: enroll, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        friendlyName: "Edge System",
+        friendlyName: "Western Information Network",
       });
       if (error) throw new Error(error.message);
       setFactorId(enroll.id);

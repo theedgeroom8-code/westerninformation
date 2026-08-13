@@ -70,7 +70,7 @@ export function UpdateGate() {
           </View>
           <Text style={styles.title}>Update available</Text>
           <Text style={styles.body}>
-            A new version of Edge System is ready. It takes a few seconds and applies instantly — no reinstall needed.
+            A new version of Western Information Network is ready. It takes a few seconds and applies instantly — no reinstall needed.
           </Text>
           {failed && (
             <Text style={styles.error}>Couldn't download the update. Check your connection and try again.</Text>

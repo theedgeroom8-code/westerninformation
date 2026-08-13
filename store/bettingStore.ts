@@ -255,7 +255,8 @@ export const useBettingStore = create<BettingStore>((set, get) => ({
           const odds = e.local_odds > 0 ? `+${e.local_odds}` : `${e.local_odds}`;
           webNotify(
             `⚡ ${Number(e.edge_pct).toFixed(1)}% Edge — ${e.sport}`,
-            `${e.matchup}\n${e.rotation_number ? `#${e.rotation_number} · ` : ""}${e.specific_bet} @ ${e.local_book} (${odds})`
+            `${e.matchup}\n${e.rotation_number ? `#${e.rotation_number} · ` : ""}${e.specific_bet} @ ${e.local_book} (${odds})`,
+            `edge-${e.id}`
           );
         }
       }),
@@ -263,7 +264,7 @@ export const useBettingStore = create<BettingStore>((set, get) => ({
       sub("rt-broadcasts", "broadcasts", undefined, (payload) => {
         get().refreshBroadcasts();
         if (payload?.eventType === "INSERT" && payload.new) {
-          webNotify(`📣 ${payload.new.title}`, payload.new.message ?? "");
+          webNotify(`📣 ${payload.new.title}`, payload.new.message ?? "", `broadcast-${payload.new.id}`);
         }
       }),
       sub("rt-bets", "bets", `user_id=eq.${userId}`, () => get().refreshBets()),

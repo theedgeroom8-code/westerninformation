@@ -138,7 +138,7 @@ export default function AdminLayout() {
               </View>
               {sidebarExpanded && (
                 <View>
-                  <Text style={styles.brandText}>Edge System</Text>
+                  <Text style={styles.brandText}>Western Information Network</Text>
                   <Text style={styles.brandSub}>ADMIN CONSOLE</Text>
                 </View>
               )}

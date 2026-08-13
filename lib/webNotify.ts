@@ -19,12 +19,19 @@ export async function enableWebNotifications(): Promise<"granted" | "denied" | "
   return result === "granted" ? "granted" : "denied";
 }
 
-/** Show a notification if permitted AND the tab isn't currently visible. */
-export function webNotify(title: string, body: string) {
+/** Show a notification if permitted AND the tab isn't currently visible.
+ *  `tag` dedupes: several open tabs firing the same event collapse into ONE
+ *  notification instead of stacking duplicates. */
+export function webNotify(title: string, body: string, tag?: string) {
   try {
     if (!webNotificationsGranted()) return;
     if (typeof document !== "undefined" && document.visibilityState === "visible") return;
-    const n = new Notification(title, { body, icon: "/pwa-icon.png", badge: "/pwa-icon.png" });
+    const n = new Notification(title, {
+      body,
+      icon: "/pwa-icon.png",
+      badge: "/pwa-icon.png",
+      ...(tag ? { tag } : {}),
+    });
     n.onclick = () => {
       window.focus();
       n.close();

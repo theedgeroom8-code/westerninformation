@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Sports Betting Edge",
+    "name": "Western Information Network",
     "slug": "sports-betting-edge",
     "version": "1.0.0",
     "sdkVersion": "54.0.0",
@@ -16,7 +16,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundColor": "#0f172a"
+        "backgroundColor": "#0a0a0c"
       },
       "package": "com.edgesystem.app",
       "googleServicesFile": "./google-services.json"

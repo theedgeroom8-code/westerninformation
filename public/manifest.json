@@ -1,13 +1,13 @@
 {
-  "name": "Edge System — Sports Betting Edge Tracker",
-  "short_name": "Edge System",
+  "name": "Western Information Network",
+  "short_name": "WIN Network",
   "description": "Real-time sports betting edge alerts with disciplined Kelly bet sizing and full P&L tracking. 21+ only.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0a0a0c",
   "icons": [
     {
       "src": "/pwa-icon.png",

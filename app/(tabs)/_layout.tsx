@@ -21,10 +21,12 @@ export default function TabsLayout() {
       s.broadcasts.filter((b) => b.createdAt > s.seenBroadcastsAt).length
   );
 
-  // Browser-tab badge: "(3) Edge System" while alerts are unread
+  // Browser-tab badge: "(3) WIN" while alerts are unread
   useEffect(() => {
     if (Platform.OS !== "web" || typeof document === "undefined") return;
-    document.title = unread > 0 ? `(${unread}) Edge System` : "Edge System — Sports Betting Edge Tracker";
+    document.title = unread > 0
+      ? `(${unread}) Western Information Network`
+      : "Western Information Network — Live Sports Betting Edges";
   }, [unread]);
 
   const tabs = (

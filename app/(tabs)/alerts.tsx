@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useCallback } from "react";
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { formatDistanceToNow } from "date-fns";
 import { useBettingStore } from "../../store/bettingStore";
@@ -17,11 +17,16 @@ export default function AlertsScreen() {
   const unread = alerts.filter((a) => !a.read).length;
   const sorted = [...alerts].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-  // Viewing this tab marks broadcasts as seen (clears their share of the badge).
-  useEffect(() => {
-    markBroadcastsSeen();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [broadcasts.length]);
+  // Viewing this tab clears the badge — standard inbox behavior. Alerts keep
+  // their unread highlight for a moment so "what's new" still reads clearly.
+  useFocusEffect(
+    useCallback(() => {
+      markBroadcastsSeen();
+      const t = setTimeout(() => markAllAlertsRead(), 1500);
+      return () => clearTimeout(t);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
 
   const openAlert = (alert: AlertItem) => {
     markAlertRead(alert.id);

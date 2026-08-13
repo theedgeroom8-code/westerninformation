@@ -63,7 +63,7 @@ export default function OnboardingScreen() {
                 <Ionicons name="flash" size={28} color={colors.gold} />
               </View>
               <Text style={styles.greeting}>Welcome{user?.name ? `, ${user.name}` : ""} 👋</Text>
-              <Text style={styles.heading}>How Edge System helps you</Text>
+              <Text style={styles.heading}>How Western Information Network helps you</Text>
 
               <View style={styles.featureList}>
                 {[
