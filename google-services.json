@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1038682374631",
+    "project_id": "edge-system-6ca0e",
+    "storage_bucket": "edge-system-6ca0e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1038682374631:android:2793b7b592e94c6d94fd42",
+        "android_client_info": {
+          "package_name": "com.edgesystem.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXF9UL1tMXwOwMOTldyX9JSWgmE9MWAwo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

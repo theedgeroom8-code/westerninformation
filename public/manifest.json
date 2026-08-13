@@ -1,0 +1,19 @@
+{
+  "name": "Edge System — Sports Betting Edge Tracker",
+  "short_name": "Edge System",
+  "description": "Real-time sports betting edge alerts with disciplined Kelly bet sizing and full P&L tracking. 21+ only.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/pwa-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
