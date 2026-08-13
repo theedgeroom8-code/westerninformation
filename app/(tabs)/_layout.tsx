@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBettingStore } from "../../store/bettingStore";
 import { useBreakpoint } from "../../lib/responsive";
@@ -19,6 +20,12 @@ export default function TabsLayout() {
       s.alerts.filter((a) => !a.read).length +
       s.broadcasts.filter((b) => b.createdAt > s.seenBroadcastsAt).length
   );
+
+  // Browser-tab badge: "(3) Edge System" while alerts are unread
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return;
+    document.title = unread > 0 ? `(${unread}) Edge System` : "Edge System — Sports Betting Edge Tracker";
+  }, [unread]);
 
   const tabs = (
     <Tabs

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBettingStore } from "../store/bettingStore";
 import { useAuthStore } from "../store/authStore";
 import { registerForPush, unregisterPush } from "../lib/notifications";
+import { enableWebNotifications } from "../lib/webNotify";
 import { showError } from "../lib/errors";
 import { toast } from "../lib/toast";
 import { webMaxWidth } from "../lib/responsive";
@@ -62,7 +63,14 @@ export default function SettingsScreen() {
     if (!user?.id) return;
     if (enabled) {
       if (Platform.OS === "web") {
-        showError("Phone push works in the mobile app. On the web, live alerts appear on the Alerts tab while you're signed in.", "Heads up");
+        const result = await enableWebNotifications();
+        if (result === "granted") {
+          toast("success", "Notifications on", "You'll get browser notifications for new edges while this site is open in any tab.");
+        } else if (result === "denied") {
+          toast("error", "Blocked by browser", "Allow notifications for this site in your browser settings, then try again.");
+        } else {
+          toast("info", "Not supported here", "This browser doesn't support notifications — alerts still appear live on the Alerts tab.");
+        }
         return;
       }
       const result = await registerForPush(user.id);
@@ -132,7 +140,8 @@ export default function SettingsScreen() {
         <FadeIn delay={80}>
           <SectionTitle icon="notifications" label="ALERT DELIVERY" />
           <View style={styles.card}>
-            <ToggleRow icon="notifications-outline" label="Push Notifications" sub="Alert your phone even when the app is closed"
+            <ToggleRow icon="notifications-outline" label="Push Notifications"
+              sub={Platform.OS === "web" ? "Browser notifications for new edges" : "Alert your phone even when the app is closed"}
               value={settings.pushAlerts} onChange={onPushToggle} />
             <ToggleRow icon="chatbox-ellipses-outline" label="SMS Alerts" sub="Also send edge alerts by text message"
               value={settings.smsAlerts} onChange={(v) => updateSettings({ smsAlerts: v })} />

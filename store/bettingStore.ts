@@ -2,7 +2,18 @@ import { create } from "zustand";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { recommendedWager } from "../lib/kelly";
+import { webNotify } from "../lib/webNotify";
 import { Edge, Bet, BankrollHistory, Settings, AlertItem, Broadcast, FeatureFlags } from "../types";
+
+// Local-time quiet hours check for browser notifications (server push has
+// its own timezone-aware check in the database).
+const inLocalQuietHours = (s: Settings): boolean => {
+  if (!s.quietHoursEnabled || s.quietStart === s.quietEnd) return false;
+  const h = new Date().getHours();
+  return s.quietStart < s.quietEnd
+    ? h >= s.quietStart && h < s.quietEnd
+    : h >= s.quietStart || h < s.quietEnd;
+};
 
 export const ALL_SPORTS = ["NFL", "NBA", "WNBA", "MLB", "NHL", "NCAAF", "NCAAB"];
 
@@ -220,18 +231,41 @@ export const useBettingStore = create<BettingStore>((set, get) => ({
       loading: false,
     });
 
+    // Report this device's UTC offset so server-side quiet hours run in the
+    // user's local time (JS offset is minutes WEST; the server wants east).
+    const deviceOffset = -new Date().getTimezoneOffset();
+    supabase.from("user_settings").update({ tz_offset_min: deviceOffset }).eq("user_id", userId).then(() => {});
+
     // Realtime — RLS-scoped postgres_changes. Refetch the affected slice on
     // any event: simple, always-consistent, and the payloads stay tiny.
-    const sub = (name: string, table: string, filter: string | undefined, onEvent: () => void) =>
+    const sub = (name: string, table: string, filter: string | undefined, onEvent: (payload?: any) => void) =>
       supabase
         .channel(name)
         .on("postgres_changes", { event: "*", schema: "public", table, ...(filter ? { filter } : {}) }, onEvent)
         .subscribe();
 
     channels = [
-      sub("rt-edges", "edges", undefined, () => { get().refreshEdges(); get().refreshAlerts(); }),
+      sub("rt-edges", "edges", undefined, (payload) => {
+        get().refreshEdges();
+        get().refreshAlerts();
+        // Browser notification for fresh edges (hidden tab only; web no-ops elsewhere)
+        const s = get().settings;
+        if (payload?.eventType === "INSERT" && payload.new && s.pushAlerts && !inLocalQuietHours(s)) {
+          const e = payload.new;
+          const odds = e.local_odds > 0 ? `+${e.local_odds}` : `${e.local_odds}`;
+          webNotify(
+            `⚡ ${Number(e.edge_pct).toFixed(1)}% Edge — ${e.sport}`,
+            `${e.matchup}\n${e.rotation_number ? `#${e.rotation_number} · ` : ""}${e.specific_bet} @ ${e.local_book} (${odds})`
+          );
+        }
+      }),
       sub("rt-alerts", "user_alerts", `user_id=eq.${userId}`, () => get().refreshAlerts()),
-      sub("rt-broadcasts", "broadcasts", undefined, () => get().refreshBroadcasts()),
+      sub("rt-broadcasts", "broadcasts", undefined, (payload) => {
+        get().refreshBroadcasts();
+        if (payload?.eventType === "INSERT" && payload.new) {
+          webNotify(`📣 ${payload.new.title}`, payload.new.message ?? "");
+        }
+      }),
       sub("rt-bets", "bets", `user_id=eq.${userId}`, () => get().refreshBets()),
       sub("rt-bankroll", "bankrolls", `user_id=eq.${userId}`, () => get().refreshBankroll()),
       sub("rt-history", "bankroll_history", `user_id=eq.${userId}`, () => get().refreshBankroll()),
