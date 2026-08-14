@@ -1,7 +1,7 @@
 import React from "react";
 import { ScrollViewStyleReset } from "expo-router/html";
 
-const SITE_URL = "https://westerninformation.vercel.app"; // swap for the custom domain when attached
+const SITE_URL = "https://westerninformationnetwork.com";
 const TITLE = "Western Information Network — Real-Time Sports Market Intelligence";
 const DESCRIPTION =
   "Western Information Network delivers real-time sports market intelligence — pricing inefficiencies detected across global markets, disciplined Kelly-based position sizing, and complete performance tracking. NFL, NBA, WNBA, MLB, NHL, and college sports. For informational purposes only. 21+.";
