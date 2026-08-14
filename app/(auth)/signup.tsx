@@ -8,9 +8,10 @@ import { Button } from "../../components/Button";
 import { useAuthStore } from "../../store/authStore";
 import { colors, spacing, radius, font } from "../../theme";
 import { showError } from "../../lib/errors";
-import { isValidEmail, isValidPhone, isValidName, passwordStrength } from "../../lib/validate";
+import { isValidEmail, isValidPhone, isValidName, passwordStrength, emailTypoSuggestion } from "../../lib/validate";
 import { PasswordMeter } from "../../components/PasswordMeter";
 import { webMaxWidth } from "../../lib/responsive";
+import { safeBack } from "../../lib/nav";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -26,6 +27,8 @@ export default function SignupScreen() {
     if (!ageOk) { showError("You must confirm you are 21 or older to continue.", "Age confirmation required"); return; }
     if (!isValidName(name)) { showError("Enter your full name (at least 2 characters).", "Check your name"); return; }
     if (!isValidEmail(email)) { showError("That doesn't look like a valid email address.", "Check your email"); return; }
+    const typoFix = emailTypoSuggestion(email);
+    if (typoFix) { showError(`Did you mean ${typoFix}? Your verification code goes to this address, so it has to be exact.`, "Check your email"); return; }
     if (!isValidPhone(phone)) { showError("That doesn't look like a valid mobile number.", "Check your number"); return; }
     const pw = passwordStrength(password);
     if (!pw.ok) { showError(pw.hint || "Use at least 8 characters with letters and numbers.", "Weak password"); return; }
@@ -46,7 +49,7 @@ export default function SignupScreen() {
   return (
     <Screen>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => safeBack(router, "/landing")} style={styles.backBtn} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
       </View>

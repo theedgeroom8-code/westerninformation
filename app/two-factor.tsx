@@ -11,6 +11,7 @@ import { colors, spacing, radius, font } from "../theme";
 import { showError } from "../lib/errors";
 import { toast, confirmAction } from "../lib/toast";
 import { webMaxWidth } from "../lib/responsive";
+import { safeBack } from "../lib/nav";
 
 type Stage = "loading" | "enabled" | "setup" | "verify";
 
@@ -28,7 +29,7 @@ export default function TwoFactorScreen() {
 
   const loadStatus = async () => {
     const { data, error } = await supabase.auth.mfa.listFactors();
-    if (error) { showError(error); router.back(); return; }
+    if (error) { showError(error); safeBack(router, "/settings"); return; }
     const active = data?.totp?.find((f) => f.status === "verified");
     if (active) {
       setFactorId(active.id);
@@ -106,7 +107,7 @@ export default function TwoFactorScreen() {
   return (
     <Screen>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, webMaxWidth(560)]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => safeBack(router, "/settings")} style={styles.backBtn} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Two-Factor Auth</Text>

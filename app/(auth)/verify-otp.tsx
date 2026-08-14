@@ -9,6 +9,7 @@ import { colors, spacing, radius, font } from "../../theme";
 import { showError } from "../../lib/errors";
 import { toast } from "../../lib/toast";
 import { webMaxWidth } from "../../lib/responsive";
+import { safeBack } from "../../lib/nav";
 
 const LENGTH = 6;
 
@@ -57,7 +58,7 @@ export default function VerifyOtpScreen() {
   return (
     <Screen>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => safeBack(router, isRecovery ? "/forgot-password" : "/signup")} style={styles.backBtn} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
       </View>

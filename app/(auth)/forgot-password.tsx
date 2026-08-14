@@ -10,6 +10,7 @@ import { colors, spacing, radius, font } from "../../theme";
 import { showError } from "../../lib/errors";
 import { isValidEmail } from "../../lib/validate";
 import { webMaxWidth } from "../../lib/responsive";
+import { safeBack } from "../../lib/nav";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function ForgotPasswordScreen() {
   return (
     <Screen>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => safeBack(router, "/login")} style={styles.backBtn} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
       </View>

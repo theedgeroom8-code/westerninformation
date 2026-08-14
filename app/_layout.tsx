@@ -10,7 +10,12 @@ import { useBettingStore } from "../store/bettingStore";
 import { registerForPush, attachNotificationDeepLinks } from "../lib/notifications";
 import { UpdateGate } from "../components/UpdateGate";
 import { ToastHost } from "../components/admin/ToastHost";
+import { WebNotifyPrompt } from "../components/WebNotifyPrompt";
+import { BiometricGate } from "../components/BiometricGate";
 import { colors } from "../theme";
+
+// Screens that only exist for signed-out visitors.
+const AUTH_PATHS = ["/landing", "/login", "/signup", "/verify-otp", "/forgot-password"];
 
 export default function RootLayout() {
   const { ready, isAuthenticated, isAdmin, hasOnboarded, pendingPasswordReset, pending2FA, user, init } = useAuthStore();
@@ -26,6 +31,34 @@ export default function RootLayout() {
 
   // Notification tap → deep link (no-op on web)
   useEffect(() => attachNotificationDeepLinks(), []);
+
+  // Deep links always land on the right screen, but Stack.Protected leaves
+  // the ADDRESS BAR behind when it swaps an unavailable route for its
+  // fallback (e.g. a signed-in user opening /forgot-password sees home with
+  // the wrong URL, and refreshing/sharing that URL misleads). Normalize the
+  // URL to match what's actually on screen.
+  useEffect(() => {
+    if (!ready || !pathname || pathname.startsWith("/admin")) return;
+    if (!isAuthenticated) {
+      if (pathname !== "/" && !AUTH_PATHS.includes(pathname)) router.replace("/landing" as any);
+      return;
+    }
+    if (pending2FA) {
+      if (pathname !== "/verify-2fa") router.replace("/verify-2fa" as any);
+      return;
+    }
+    if (pendingPasswordReset) {
+      if (pathname !== "/reset-password") router.replace("/reset-password" as any);
+      return;
+    }
+    const wrongHere =
+      AUTH_PATHS.includes(pathname) || pathname === "/verify-2fa" || pathname === "/reset-password";
+    if (!hasOnboarded) {
+      if (pathname !== "/onboarding") router.replace("/onboarding" as any);
+    } else if (wrongHere || pathname === "/onboarding") {
+      router.replace("/(tabs)" as any);
+    }
+  }, [ready, pathname, isAuthenticated, pending2FA, pendingPasswordReset, hasOnboarded, router]);
 
   // On the website, admins land in the admin console (once per session —
   // they can still browse the user app afterwards via the sidebar).
@@ -116,6 +149,12 @@ export default function RootLayout() {
           <Stack.Screen name="admin" />
         </Stack>
         <UpdateGate />
+        {/* Biometric app lock (native, only when the user enabled it) */}
+        {Platform.OS !== "web" && <BiometricGate />}
+        {/* Ask the browser for notification permission once signed in */}
+        {Platform.OS === "web" && isAuthenticated && hasOnboarded && !pending2FA && !pendingPasswordReset && (
+          <WebNotifyPrompt />
+        )}
         {/* Global toast surface — RN-web has no Alert, so every screen's
             toasts render through this single host (admin included). */}
         {Platform.OS === "web" && <ToastHost />}

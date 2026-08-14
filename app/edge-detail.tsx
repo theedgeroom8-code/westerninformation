@@ -11,6 +11,7 @@ import { showError } from "../lib/errors";
 import { toast } from "../lib/toast";
 import { webMaxWidth } from "../lib/responsive";
 import { formatTimeToGame } from "../lib/format";
+import { safeBack } from "../lib/nav";
 
 export default function EdgeDetailScreen() {
   const { edgeId } = useLocalSearchParams<{ edgeId: string }>();
@@ -35,7 +36,7 @@ export default function EdgeDetailScreen() {
           <Text style={styles.goneText}>
             Lines move fast — this opportunity is no longer available. Fresh edges appear on your board the moment they're detected.
           </Text>
-          <TouchableOpacity style={styles.goneBtn} onPress={() => router.back()} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.goneBtn} onPress={() => safeBack(router, "/(tabs)")} activeOpacity={0.85}>
             <Text style={styles.goneBtnText}>Back to Live Edges</Text>
           </TouchableOpacity>
         </View>
@@ -75,7 +76,7 @@ export default function EdgeDetailScreen() {
       {/* custom modal header */}
       <View style={styles.modalHeader}>
         <Text style={styles.modalHeaderTitle}>Edge Detail</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => safeBack(router, "/(tabs)")} style={styles.closeBtn} activeOpacity={0.7}>
           <Ionicons name="close" size={22} color={colors.textDim} />
         </TouchableOpacity>
       </View>

@@ -4,6 +4,28 @@
 export const isValidEmail = (email: string): boolean =>
   /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
 
+// Domains that are always a slip of a popular provider — verification codes
+// sent there bounce, locking the user out of their brand-new account.
+const EMAIL_TYPOS: Record<string, string> = {
+  "gmail.comm": "gmail.com", "gmail.con": "gmail.com", "gmail.co": "gmail.com",
+  "gmail.cm": "gmail.com", "gmial.com": "gmail.com", "gamil.com": "gmail.com",
+  "gmal.com": "gmail.com", "gnail.com": "gmail.com", "gmaill.com": "gmail.com",
+  "yahoo.con": "yahoo.com", "yaho.com": "yahoo.com", "yahoo.comm": "yahoo.com",
+  "hotmail.con": "hotmail.com", "hotmial.com": "hotmail.com", "hotmail.comm": "hotmail.com",
+  "outlook.con": "outlook.com", "outlok.com": "outlook.com", "outlook.comm": "outlook.com",
+  "iclod.com": "icloud.com", "icloud.con": "icloud.com", "icoud.com": "icloud.com",
+};
+
+/** Returns the corrected address for a known provider typo, else null. */
+export function emailTypoSuggestion(email: string): string | null {
+  const t = email.trim().toLowerCase();
+  const at = t.lastIndexOf("@");
+  if (at < 1) return null;
+  const domain = t.slice(at + 1);
+  const fix = EMAIL_TYPOS[domain];
+  return fix ? `${t.slice(0, at)}@${fix}` : null;
+}
+
 /** Optional field; when present must look like a phone number (7–15 digits). */
 export const isValidPhone = (phone: string): boolean => {
   const trimmed = phone.trim();

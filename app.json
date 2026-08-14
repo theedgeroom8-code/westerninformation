@@ -8,7 +8,9 @@
     "icon": "./assets/images/icon.png",
     "scheme": "sportsbettingedge",
     "userInterfaceStyle": "dark",
-    "runtimeVersion": { "policy": "appVersion" },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "updates": {
       "url": "https://u.expo.dev/56562275-abfb-4f25-beb8-9c86956b6e4d",
       "checkAutomatically": "ON_LOAD"
@@ -37,6 +39,12 @@
         {
           "color": "#F5B841",
           "defaultChannel": "edges"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Western Information Network to use Face ID to unlock the app."
         }
       ]
     ],

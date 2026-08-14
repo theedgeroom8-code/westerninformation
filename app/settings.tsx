@@ -10,6 +10,7 @@ import { enableWebNotifications } from "../lib/webNotify";
 import { showError } from "../lib/errors";
 import { toast } from "../lib/toast";
 import { webMaxWidth } from "../lib/responsive";
+import { safeBack } from "../lib/nav";
 import { Screen } from "../components/Screen";
 
 // Cross-platform info dialog — RN-web's Alert is a silent no-op.
@@ -84,6 +85,38 @@ export default function SettingsScreen() {
     }
   };
 
+  // Verify the device can actually authenticate before persisting the toggle,
+  // and require one successful scan so nobody locks themselves out blind.
+  const onToggleBiometric = async (enabled: boolean) => {
+    if (!enabled) { updateSettings({ biometricUnlock: false }); return; }
+    let LA: any;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      LA = require("expo-local-authentication");
+      await LA.hasHardwareAsync();
+    } catch {
+      showError("Biometric unlock needs the latest app version. Install the newest build and try again.", "Update required");
+      return;
+    }
+    try {
+      if (!(await LA.hasHardwareAsync())) {
+        showError("This device doesn't support fingerprint or face unlock.", "Not supported");
+        return;
+      }
+      if (!(await LA.isEnrolledAsync())) {
+        showError("Set up fingerprint or face unlock in your phone's settings first, then turn this on.", "Nothing enrolled");
+        return;
+      }
+      const res = await LA.authenticateAsync({ promptMessage: "Confirm to enable biometric unlock" });
+      if (res.success) {
+        await updateSettings({ biometricUnlock: true });
+        notice("Biometric unlock on", "The app will ask for your fingerprint or face every time it opens.");
+      }
+    } catch (e: any) {
+      showError(e, "Couldn't enable biometric unlock");
+    }
+  };
+
   const ToggleRow = ({ icon, label, sub, value, onChange, last }: {
     icon: string; label: string; sub: string; value: boolean; onChange: (v: boolean) => void; last?: boolean;
   }) => (
@@ -108,7 +141,7 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }, webMaxWidth(680)]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => safeBack(router, "/(tabs)/account")} style={styles.backBtn} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
@@ -188,7 +221,7 @@ export default function SettingsScreen() {
           <View style={styles.card}>
             {Platform.OS !== "web" && (
               <ToggleRow icon="finger-print-outline" label="Biometric Unlock" sub="Require Face ID / fingerprint to open"
-                value={settings.biometricUnlock} onChange={(v) => updateSettings({ biometricUnlock: v })} />
+                value={settings.biometricUnlock} onChange={onToggleBiometric} />
             )}
             <TouchableOpacity style={[styles.toggleRow]} activeOpacity={0.7} onPress={() => router.push("/two-factor" as any)}>
               <View style={styles.toggleIcon}>

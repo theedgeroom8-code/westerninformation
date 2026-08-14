@@ -9,6 +9,7 @@ import { useBettingStore } from "../store/bettingStore";
 import { colors, spacing, radius, font } from "../theme";
 import { showError } from "../lib/errors";
 import { webMaxWidth } from "../lib/responsive";
+import { safeBack } from "../lib/nav";
 
 export default function AdjustBankrollScreen() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function AdjustBankrollScreen() {
     setSaving(true);
     try {
       await adjustBankroll(delta, label);
-      router.back();
+      safeBack(router, "/(tabs)");
     } catch (e: any) {
       showError(e, "Couldn't update balance");
     } finally {
@@ -41,7 +42,7 @@ export default function AdjustBankrollScreen() {
     <Screen>
       <View style={styles.header}>
         <Text style={styles.title}>Adjust Balance</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => safeBack(router, "/(tabs)")} style={styles.closeBtn} activeOpacity={0.7}>
           <Ionicons name="close" size={22} color={colors.textDim} />
         </TouchableOpacity>
       </View>
