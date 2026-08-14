@@ -59,7 +59,7 @@ export default function AccountScreen() {
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{initials}</Text>
             </View>
-            <Text style={styles.name}>{user?.name || "Bettor"}</Text>
+            <Text style={styles.name}>{user?.name || "Member"}</Text>
             <Text style={styles.email}>{user?.email || "demo@edgesystem.io"}</Text>
 
             <View style={styles.profileStats}>
@@ -70,7 +70,7 @@ export default function AccountScreen() {
               <View style={styles.pDiv} />
               <View style={styles.pStat}>
                 <Text style={styles.pStatVal}>{resolved.length}</Text>
-                <Text style={styles.pStatLabel}>Bets</Text>
+                <Text style={styles.pStatLabel}>Plays</Text>
               </View>
               <View style={styles.pDiv} />
               <View style={styles.pStat}>
@@ -84,7 +84,7 @@ export default function AccountScreen() {
         <FadeIn delay={80}>
           <Text style={styles.section}>PREFERENCES</Text>
           <View style={styles.card}>
-            <MenuRow icon="options" label="Bet Sizing & Risk" value={`${settings.kellyFraction}% Kelly`} onPress={() => router.push("/settings")} />
+            <MenuRow icon="options" label="Position Sizing & Risk" value={`${settings.kellyFraction}% Kelly`} onPress={() => router.push("/settings")} />
             <View style={styles.divider} />
             <MenuRow
               icon="notifications"
@@ -111,7 +111,7 @@ export default function AccountScreen() {
           <View style={styles.card}>
             <MenuRow icon="help-circle" label="Help & FAQ" onPress={() => notice("Help", "Support center is on the roadmap. For now, contact your administrator.")} />
             <View style={styles.divider} />
-            <MenuRow icon="document-text" label="Terms & Privacy" onPress={() => notice("Legal", "This tool detects edges only. It does not place bets or hold money.")} />
+            <MenuRow icon="document-text" label="Terms & Privacy" onPress={() => notice("Legal", "Western Information Network provides sports market information for educational purposes only. It never holds funds or processes transactions.")} />
             <View style={styles.divider} />
             <MenuRow icon="information-circle" label="About" value="v1.0" onPress={() => notice("Western Information Network", "Version 1.0 · Live odds engine connected.")} />
           </View>

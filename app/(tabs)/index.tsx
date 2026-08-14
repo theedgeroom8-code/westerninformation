@@ -95,7 +95,7 @@ export default function EdgesScreen() {
               <Ionicons name="search" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search team or bet…"
+                placeholder="Search team or play…"
                 placeholderTextColor={colors.textMuted}
                 value={query}
                 onChangeText={setQuery}

@@ -51,7 +51,7 @@ export default function RootLayout() {
       <>
         {Platform.OS === "web" && (
           <Head>
-            <title>Western Information Network — Live Sports Betting Edges</title>
+            <title>Western Information Network — Real-Time Sports Market Intelligence</title>
           </Head>
         )}
         <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
@@ -65,7 +65,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       {Platform.OS === "web" && (
         <Head>
-          <title>Western Information Network — Live Sports Betting Edges</title>
+          <title>Western Information Network — Real-Time Sports Market Intelligence</title>
         </Head>
       )}
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>

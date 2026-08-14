@@ -49,7 +49,7 @@ export default function BankrollScreen() {
     <Screen>
       <Header
         maxWidth={880}
-        title="Bankroll"
+        title="Balance"
         subtitle="Performance & history"
         icon="wallet"
         right={

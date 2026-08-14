@@ -38,7 +38,7 @@ async function loadProfile(session: Session) {
   ]);
   const user: User = {
     id: uid,
-    name: profile?.name || session.user.user_metadata?.name || "Bettor",
+    name: profile?.name || session.user.user_metadata?.name || "Member",
     email: profile?.email || session.user.email || "",
     phone: profile?.phone || undefined,
     role: (profile?.role as "user" | "admin") || "user",

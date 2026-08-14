@@ -27,7 +27,7 @@ export const BankrollCard: React.FC<Props> = ({ bankroll, profitLoss }) => {
         <View style={styles.glow} />
 
         <View style={styles.topRow}>
-          <Text style={styles.label}>TOTAL BANKROLL</Text>
+          <Text style={styles.label}>TOTAL BALANCE</Text>
           <View style={styles.liveTag}>
             <View style={styles.liveDot} />
             <Text style={styles.liveText}>LIVE</Text>

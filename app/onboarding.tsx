@@ -67,9 +67,9 @@ export default function OnboardingScreen() {
 
               <View style={styles.featureList}>
                 {[
-                  { icon: "notifications", title: "Instant edge alerts", desc: "Get notified the moment a sportsbook posts a price worth betting." },
-                  { icon: "calculator", title: "Smart bet sizing", desc: "Every alert includes a recommended wager based on your bankroll." },
-                  { icon: "trending-up", title: "Track your results", desc: "Log bets, enter results, and watch your bankroll and ROI grow." },
+                  { icon: "notifications", title: "Instant edge alerts", desc: "Get notified the moment the market posts a price worth acting on." },
+                  { icon: "calculator", title: "Smart position sizing", desc: "Every alert includes a suggested amount based on your balance." },
+                  { icon: "trending-up", title: "Track your results", desc: "Track plays, enter results, and watch your balance and ROI grow." },
                 ].map((f) => (
                   <View key={f.title} style={styles.feature}>
                     <View style={styles.featureIcon}>
@@ -91,11 +91,11 @@ export default function OnboardingScreen() {
               <View style={styles.badge}>
                 <Ionicons name="wallet" size={28} color={colors.gold} />
               </View>
-              <Text style={styles.heading}>Set your starting bankroll</Text>
-              <Text style={styles.sub}>Bet sizing is calculated from this. You can change it any time.</Text>
+              <Text style={styles.heading}>Set your starting balance</Text>
+              <Text style={styles.sub}>Position sizing is calculated from this. You can adjust it any time.</Text>
 
               <View style={styles.amountCard}>
-                <Text style={styles.amountLabel}>STARTING BANKROLL</Text>
+                <Text style={styles.amountLabel}>STARTING BALANCE</Text>
                 <View style={styles.amountRow}>
                   <Text style={styles.dollar}>$</Text>
                   <TextInput style={styles.amountInput} value={amount} onChangeText={setAmount} keyboardType="number-pad" placeholder="10000" placeholderTextColor={colors.textMuted} />

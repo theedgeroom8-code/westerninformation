@@ -1,7 +1,7 @@
 {
   "name": "Western Information Network",
   "short_name": "WIN Network",
-  "description": "Real-time sports betting edge alerts with disciplined Kelly bet sizing and full P&L tracking. 21+ only.",
+  "description": "Real-time sports market intelligence with disciplined position sizing and full performance tracking. 21+ only.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -57,7 +57,7 @@ export default function SignupScreen() {
 
           <View style={{ height: spacing.xl }} />
 
-          <TextField label="Full name" value={name} onChangeText={setName} placeholder="John Bettor" icon="person-outline" autoCapitalize="words" />
+          <TextField label="Full name" value={name} onChangeText={setName} placeholder="Jordan Carter" icon="person-outline" autoCapitalize="words" />
           <TextField label="Email" value={email} onChangeText={setEmail} placeholder="you@email.com" icon="mail-outline" keyboardType="email-address" autoCapitalize="none" />
           <TextField label="Mobile number" value={phone} onChangeText={setPhone} placeholder="+1 555 123 4567" icon="call-outline" keyboardType="phone-pad" />
           <TextField label="Password" value={password} onChangeText={setPassword} placeholder="Create a password" icon="lock-closed-outline" secure />
@@ -76,7 +76,7 @@ export default function SignupScreen() {
           <View style={styles.disclaimer}>
             <Ionicons name="shield-outline" size={14} color={colors.textMuted} />
             <Text style={styles.disclaimerText}>
-              This app detects betting edges and is not gambling advice. It does not place bets — you bet at licensed sportsbooks.
+              Western Information Network provides sports market information for educational purposes only. It never holds funds or processes transactions.
             </Text>
           </View>
 

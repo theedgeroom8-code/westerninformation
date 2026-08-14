@@ -50,21 +50,21 @@ export default function EdgeDetailScreen() {
 
   const logBet = async () => {
     const amount = parseFloat(wager);
-    if (!amount || amount <= 0) { showError("Please enter a valid wager.", "Invalid amount"); return; }
+    if (!amount || amount <= 0) { showError("Please enter a valid amount.", "Invalid amount"); return; }
     setLogging(true);
     try {
       await logBetRpc(edge, amount);
-      // Land the user on My Bets so the logged bet is immediately visible.
+      // Land the user on My Plays so the tracked play is immediately visible.
       if (Platform.OS === "web") {
-        toast("success", "Bet logged ✓", `$${amount} on ${edge.specificBet} — tracking it in My Bets.`);
+        toast("success", "Play tracked ✓", `$${amount} on ${edge.specificBet} — see it in My Plays.`);
         router.replace("/(tabs)/bets");
       } else {
-        Alert.alert("Bet Logged ✓", `$${amount} on ${edge.specificBet}`, [
-          { text: "View My Bets", onPress: () => router.replace("/(tabs)/bets") },
+        Alert.alert("Play Tracked ✓", `$${amount} on ${edge.specificBet}`, [
+          { text: "View My Plays", onPress: () => router.replace("/(tabs)/bets") },
         ]);
       }
     } catch (e: any) {
-      showError(e, "Couldn't log bet");
+      showError(e, "Couldn't track play");
     } finally {
       setLogging(false);
     }
@@ -112,14 +112,14 @@ export default function EdgeDetailScreen() {
         {/* Actionable play only — the "how" (sharp books / no-vig / fair price) is
             intentionally hidden from users and lives in the admin dashboard. */}
         <FadeIn delay={80}>
-          <Text style={styles.sectionTitle}>WHAT TO BET</Text>
+          <Text style={styles.sectionTitle}>THE PLAY</Text>
           <View style={styles.card}>
             <View style={styles.playRow}>
               <View style={styles.playIcon}>
                 <Ionicons name="flag" size={18} color={colors.gold} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.playLabel}>THE BET</Text>
+                <Text style={styles.playLabel}>PLAY</Text>
                 <Text style={styles.playValue}>
                   {edge.rotationNumber ? `#${edge.rotationNumber} · ` : ""}{edge.specificBet}
                 </Text>
@@ -127,7 +127,7 @@ export default function EdgeDetailScreen() {
             </View>
             <View style={styles.divider} />
             {[
-              ["Sportsbook", edge.localBook, "business-outline"],
+              ["Source", edge.localBook, "business-outline"],
               ["Line to take", `${edge.localOdds > 0 ? "+" : ""}${edge.localOdds}`, "pricetag-outline"],
               ["Game starts", timeLabel + " from now", "time-outline"],
             ].map(([label, value, icon], i, arr) => (
@@ -143,7 +143,7 @@ export default function EdgeDetailScreen() {
         </FadeIn>
 
         <FadeIn delay={160}>
-          <Text style={styles.sectionTitle}>RECOMMENDED WAGER</Text>
+          <Text style={styles.sectionTitle}>SUGGESTED AMOUNT</Text>
           <View style={styles.card}>
             <View style={styles.kellyRow}>
               <View>
@@ -157,7 +157,7 @@ export default function EdgeDetailScreen() {
 
             <View style={styles.divider} />
 
-            <Text style={styles.inputLabel}>YOUR WAGER</Text>
+            <Text style={styles.inputLabel}>YOUR AMOUNT</Text>
             <View style={styles.inputWrap}>
               <Text style={styles.dollar}>$</Text>
               <TextInput
@@ -202,7 +202,7 @@ export default function EdgeDetailScreen() {
             <Ionicons name="checkmark-circle" size={20} color={colors.ink} />
           ) : null}
           <Text style={[styles.btnText, (!wager || logging) && { color: colors.textMuted }]}>
-            {logging ? "Logging…" : "Log This Bet"}
+            {logging ? "Tracking…" : "Track This Play"}
           </Text>
         </TouchableOpacity>
       </View>

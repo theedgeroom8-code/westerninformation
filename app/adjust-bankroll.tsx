@@ -23,7 +23,7 @@ export default function AdjustBankrollScreen() {
 
   const submit = async () => {
     if (value <= 0) { showError("Enter an amount greater than zero.", "Invalid amount"); return; }
-    if (mode === "withdraw" && value > bankroll) { showError("You can't withdraw more than your balance.", "Insufficient bankroll"); return; }
+    if (mode === "withdraw" && value > bankroll) { showError("You can't withdraw more than your balance.", "Insufficient balance"); return; }
     const delta = mode === "deposit" ? value : -value;
     const label = reason.trim() || (mode === "deposit" ? "Manual deposit" : "Manual withdrawal");
     setSaving(true);
@@ -31,7 +31,7 @@ export default function AdjustBankrollScreen() {
       await adjustBankroll(delta, label);
       router.back();
     } catch (e: any) {
-      showError(e, "Couldn't update bankroll");
+      showError(e, "Couldn't update balance");
     } finally {
       setSaving(false);
     }
@@ -40,7 +40,7 @@ export default function AdjustBankrollScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>Adjust Bankroll</Text>
+        <Text style={styles.title}>Adjust Balance</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.7}>
           <Ionicons name="close" size={22} color={colors.textDim} />
         </TouchableOpacity>

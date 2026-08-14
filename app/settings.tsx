@@ -118,10 +118,10 @@ export default function SettingsScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, webMaxWidth(680)]}>
         {/* Bet sizing — the user's own risk preference */}
         <FadeIn delay={0}>
-          <SectionTitle icon="calculator" label="BET SIZING" />
+          <SectionTitle icon="calculator" label="POSITION SIZING" />
           <View style={styles.card}>
             <Text style={styles.rowLabel}>Risk Level (Kelly Fraction)</Text>
-            <Text style={styles.rowSub}>How aggressively wagers are sized to your bankroll</Text>
+            <Text style={styles.rowSub}>How aggressively positions are sized to your balance</Text>
             <View style={styles.options}>
               {[
                 { v: 10, t: "Conservative" }, { v: 15, t: "" }, { v: 20, t: "" },
@@ -208,13 +208,13 @@ export default function SettingsScreen() {
           <SectionTitle icon="document-text" label="LEGAL" />
           <View style={styles.card}>
             <TouchableOpacity style={[styles.linkRow, styles.border]} activeOpacity={0.7}
-              onPress={() => notice("Terms of Service", "This app detects betting edges and is not gambling advice. It does not place bets. Full terms provided at launch.")}>
+              onPress={() => notice("Terms of Service", "Western Information Network provides sports market information and analytics for educational purposes only. Full terms provided at launch.")}>
               <Ionicons name="reader-outline" size={18} color={colors.textDim} />
               <Text style={styles.linkLabel}>Terms of Service</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.linkRow} activeOpacity={0.7}
-              onPress={() => notice("Privacy Policy", "We store your account and bet-tracking data only. No real money is held. Full policy provided at launch.")}>
+              onPress={() => notice("Privacy Policy", "We store your account and performance-tracking data only. No funds are held. Full policy provided at launch.")}>
               <Ionicons name="shield-outline" size={18} color={colors.textDim} />
               <Text style={styles.linkLabel}>Privacy Policy</Text>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
@@ -224,7 +224,7 @@ export default function SettingsScreen() {
           <View style={styles.disclaimer}>
             <Ionicons name="information-circle-outline" size={15} color={colors.textMuted} />
             <Text style={styles.disclaimerText}>
-              21+ only. This app does not place bets or hold money. Bankroll figures are for tracking your own records.
+              21+ only. This service provides information and analytics — it never holds money. Balance figures are for tracking your own records.
             </Text>
           </View>
         </FadeIn>

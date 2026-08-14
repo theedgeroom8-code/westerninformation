@@ -2,9 +2,9 @@ import React from "react";
 import { ScrollViewStyleReset } from "expo-router/html";
 
 const SITE_URL = "https://westerninformation.vercel.app"; // swap for the custom domain when attached
-const TITLE = "Western Information Network — Live Sports Betting Edges";
+const TITLE = "Western Information Network — Real-Time Sports Market Intelligence";
 const DESCRIPTION =
-  "Western Information Network detects real-time sports betting edges by comparing sharp and local sportsbook lines, sizes every wager with the Kelly Criterion, and tracks your full P&L. NFL, NBA, WNBA, MLB, NHL, and college sports. 21+ only. Not gambling advice.";
+  "Western Information Network delivers real-time sports market intelligence — pricing inefficiencies detected across global markets, disciplined Kelly-based position sizing, and complete performance tracking. NFL, NBA, WNBA, MLB, NHL, and college sports. For informational purposes only. 21+.";
 
 /** Custom HTML shell for the static web export (website / PWA / SEO). */
 export default function Root({ children }: { children: React.ReactNode }) {
@@ -42,7 +42,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="apple-mobile-web-app-title" content="WIN Network" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/pwa-icon.png" />
-        <link rel="icon" type="image/png" href="/pwa-icon.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+        <link rel="icon" type="image/png" sizes="1024x1024" href="/pwa-icon.png" />
 
         <ScrollViewStyleReset />
         {/* Paint the app background before the JS bundle loads (no white flash) */}

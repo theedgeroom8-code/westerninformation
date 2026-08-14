@@ -9,8 +9,8 @@ import { colors, spacing, radius, font } from "../theme";
 const NAV = [
   { href: "/", icon: "flash", label: "Edges" },
   { href: "/alerts", icon: "notifications", label: "Alerts" },
-  { href: "/bets", icon: "receipt", label: "My Bets" },
-  { href: "/bankroll", icon: "wallet", label: "Bankroll" },
+  { href: "/bets", icon: "receipt", label: "My Plays" },
+  { href: "/bankroll", icon: "wallet", label: "Balance" },
   { href: "/account", icon: "person-circle", label: "Account" },
 ] as const;
 
@@ -86,7 +86,7 @@ export function WebSidebar({ unread }: { unread: number }) {
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.userName} numberOfLines={1}>{user?.name || "Bettor"}</Text>
+            <Text style={styles.userName} numberOfLines={1}>{user?.name || "Member"}</Text>
             <Text style={styles.userEmail} numberOfLines={1}>{user?.email || ""}</Text>
           </View>
           <TouchableOpacity onPress={onLogout} hitSlop={10} activeOpacity={0.7}>

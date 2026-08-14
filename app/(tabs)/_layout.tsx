@@ -26,7 +26,7 @@ export default function TabsLayout() {
     if (Platform.OS !== "web" || typeof document === "undefined") return;
     document.title = unread > 0
       ? `(${unread}) Western Information Network`
-      : "Western Information Network — Live Sports Betting Edges";
+      : "Western Information Network — Real-Time Sports Market Intelligence";
   }, [unread]);
 
   const tabs = (
@@ -72,11 +72,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="bets"
-        options={{ tabBarLabel: "Bets", tabBarIcon: (p) => <TabIcon name="receipt" {...p} /> }}
+        options={{ tabBarLabel: "Plays", tabBarIcon: (p) => <TabIcon name="receipt" {...p} /> }}
       />
       <Tabs.Screen
         name="bankroll"
-        options={{ tabBarLabel: "Bankroll", tabBarIcon: (p) => <TabIcon name="wallet" {...p} /> }}
+        options={{ tabBarLabel: "Balance", tabBarIcon: (p) => <TabIcon name="wallet" {...p} /> }}
       />
       <Tabs.Screen
         name="account"

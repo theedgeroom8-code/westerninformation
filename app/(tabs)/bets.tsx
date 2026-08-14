@@ -33,7 +33,7 @@ export default function BetsScreen() {
       await settleBet(selectedId, result);
       setSelectedId(null);
     } catch (e: any) {
-      showError(e, "Couldn't settle bet");
+      showError(e, "Couldn't settle play");
     } finally {
       setSettling(false);
     }
@@ -117,7 +117,7 @@ export default function BetsScreen() {
     <Screen>
       <Header
         maxWidth={820}
-        title="My Bets"
+        title="My Plays"
         subtitle={`${open.length} open · ${closed.length} settled`}
         icon="receipt"
       />
