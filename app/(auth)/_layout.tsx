@@ -10,9 +10,12 @@ export default function AuthLayout() {
         animation: "slide_from_right",
       }}
     >
+      {/* landing first — signed-out users see the marketing page, not a raw login form */}
+      <Stack.Screen name="landing" />
       <Stack.Screen name="login" />
       <Stack.Screen name="signup" />
       <Stack.Screen name="verify-otp" />
+      <Stack.Screen name="forgot-password" />
     </Stack>
   );
 }

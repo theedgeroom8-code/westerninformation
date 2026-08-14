@@ -137,8 +137,8 @@ export default function AdminLayout() {
                 <Ionicons name="flash" size={16} color={colors.ink} />
               </View>
               {sidebarExpanded && (
-                <View>
-                  <Text style={styles.brandText}>Western Information Network</Text>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={styles.brandText} numberOfLines={2}>Western Information Network</Text>
                   <Text style={styles.brandSub}>ADMIN CONSOLE</Text>
                 </View>
               )}
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   sidebarCollapsed: { width: 72, paddingHorizontal: spacing.sm },
   brandRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.sm, marginBottom: spacing.xxl },
   brandBadge: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.gold, alignItems: "center", justifyContent: "center" },
-  brandText: { color: colors.text, fontSize: font.body, fontWeight: font.heavy },
+  brandText: { color: colors.text, fontSize: font.small, fontWeight: font.heavy, lineHeight: 16 },
   brandSub: { color: colors.textMuted, fontSize: 9, letterSpacing: 1, fontWeight: font.bold },
   navList: { gap: 2 },
   navItem: {

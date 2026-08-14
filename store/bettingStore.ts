@@ -179,7 +179,10 @@ export const useBettingStore = create<BettingStore>((set, get) => ({
   seenBroadcastsAt: new Date(),
 
   markBroadcastsSeen: async () => {
-    const userId = get().userId;
+    const { userId, broadcasts, seenBroadcastsAt } = get();
+    // No-op when nothing is unseen — every write fires a realtime event that
+    // refetches settings, which made the Alerts tab visibly refresh on focus.
+    if (!broadcasts.some((b) => b.createdAt > seenBroadcastsAt)) return;
     const now = new Date();
     set({ seenBroadcastsAt: now });
     if (userId) {
@@ -403,6 +406,7 @@ export const useBettingStore = create<BettingStore>((set, get) => ({
 
   markAllAlertsRead: async () => {
     const userId = get().userId;
+    if (!get().alerts.some((a) => !a.read)) return; // nothing unread — no write, no refetch
     set({ alerts: get().alerts.map((a) => ({ ...a, read: true })) });
     if (userId) await supabase.from("user_alerts").update({ read: true }).eq("user_id", userId).eq("read", false);
   },
