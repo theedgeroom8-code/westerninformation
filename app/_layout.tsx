@@ -40,7 +40,9 @@ export default function RootLayout() {
   useEffect(() => {
     if (!ready || !pathname || pathname.startsWith("/admin")) return;
     if (!isAuthenticated) {
-      if (pathname !== "/" && !AUTH_PATHS.includes(pathname)) router.replace("/landing" as any);
+      // "/" belongs to the signed-in dashboard; with it guarded off the
+      // router falls back ambiguously, so pin signed-out visitors to /landing.
+      if (!AUTH_PATHS.includes(pathname)) router.replace("/landing" as any);
       return;
     }
     if (pending2FA) {

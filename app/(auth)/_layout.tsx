@@ -1,6 +1,11 @@
 import { Stack } from "expo-router";
 import { colors } from "../../theme";
 
+// Anchor the group: when a guard bounces a visitor into (auth) without a
+// specific child route, land on the marketing page — NOT the alphabetically
+// first file (forgot-password), which used to hijack the URL bar.
+export const unstable_settings = { initialRouteName: "landing" };
+
 export default function AuthLayout() {
   return (
     <Stack
