@@ -44,3 +44,4 @@ example
 /android
 
 .vercel
+supabase/.temp/
