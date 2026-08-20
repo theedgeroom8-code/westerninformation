@@ -139,7 +139,7 @@ export default function AdminEdges() {
         <Ionicons name="information-circle-outline" size={15} color={colors.blue} />
         <Text style={styles.sourceNoteText}>
           The odds engine now creates edges automatically from The Odds API (Pinnacle no-vig) — control it
-          in Config. Manual publishing still works for books the API doesn't carry (South Point, TI, Coast).
+          in Config. Manual publishing still works for books the API doesn't carry (South Point, Coast Casino).
         </Text>
       </View>
 

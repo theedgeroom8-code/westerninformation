@@ -5,11 +5,12 @@ import { supabase } from "../../lib/supabase";
 import { colors, spacing, radius, font } from "../../theme";
 import { showError } from "../../lib/errors";
 
-const BOOKS = ["South Point", "Caesars", "DraftKings", "Treasure Island", "Wynn", "Coast Casino", "BetMGM", "Circa"];
-const SPORTS = ["NFL", "NBA", "MLB", "NHL", "NCAAF", "NCAAB"];
+// Treasure Island folded into Station Sports (client, Aug 2026) — dropped.
+const BOOKS = ["South Point", "Caesars", "DraftKings", "FanDuel", "Wynn", "Coast Casino", "BetMGM", "Circa"];
+const SPORTS = ["NFL", "NBA", "WNBA", "MLB", "NHL", "NCAAF", "NCAAB"];
 // Books the odds engine can track automatically (mirrors api_book_map).
 // Unlisted books aren't carried by The Odds API — manual edges only.
-const AUTO_BOOKS = new Set(["DraftKings", "BetMGM", "Caesars", "Wynn", "Circa"]);
+const AUTO_BOOKS = new Set(["DraftKings", "BetMGM", "Caesars", "Wynn", "Circa", "FanDuel"]);
 
 interface EngineState {
   last_poll_at: string | null;
