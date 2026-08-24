@@ -50,7 +50,10 @@ export default function AdminOverview() {
     const { profiles, edges, alertCount, bets } = raw;
     const users = profiles.filter((p) => p.role === "user");
     const settled = bets.filter((b) => b.result);
+    const open = bets.filter((b) => !b.result);
     const staked = bets.reduce((s, b) => s + Number(b.actual_wager), 0);
+    // Money currently at risk — open plays only, not yet won/lost/pushed.
+    const lockedIn = open.reduce((s, b) => s + Number(b.actual_wager), 0);
     const pl = bets.reduce((s, b) => s + Number(b.profit_loss || 0), 0);
     const wins = settled.filter((b) => b.result === "win").length;
     const decided = settled.filter((b) => b.result !== "push").length;
@@ -93,6 +96,7 @@ export default function AdminOverview() {
       totalBets: bets.length,
       openBets: bets.length - settled.length,
       staked,
+      lockedIn,
       pl,
       winRate: decided ? Math.round((wins / decided) * 100) : 0,
       betsPerDay,
@@ -127,10 +131,16 @@ export default function AdminOverview() {
       tiles: [
         { label: "Bets Logged", value: String(c.totalBets), icon: "receipt", color: colors.gold },
         { label: "Open", value: String(c.openBets), icon: "hourglass", color: colors.textDim },
-        { label: "Win Rate", value: `${c.winRate}%`, icon: "trophy", color: colors.gold },
-        { label: "Staked", value: `$${c.staked.toLocaleString()}`, icon: "cash", color: colors.green },
         {
-          label: "Users Net P&L",
+          label: "Locked In (open)",
+          value: `$${c.lockedIn.toLocaleString()}`,
+          icon: "lock-closed",
+          color: colors.gold,
+        },
+        { label: "Win Rate", value: `${c.winRate}%`, icon: "trophy", color: colors.gold },
+        { label: "Total Handle", value: `$${c.staked.toLocaleString()}`, icon: "cash", color: colors.green },
+        {
+          label: "Users Net P&L (settled)",
           value: `${c.pl >= 0 ? "+" : "−"}$${Math.abs(c.pl).toLocaleString()}`,
           icon: c.pl >= 0 ? "trending-up" : "trending-down",
           color: c.pl >= 0 ? colors.green : colors.red,
