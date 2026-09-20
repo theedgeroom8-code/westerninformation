@@ -17,7 +17,7 @@ interface AuthStore {
 
   init: () => void;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, phone: string, password: string) => Promise<"verified" | "needs_otp">;
+  signup: (name: string, email: string, phone: string, password: string, inviteCode?: string) => Promise<"verified" | "needs_otp">;
   verifyOtp: (email: string, token: string) => Promise<void>;
   resendOtp: (email: string) => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -112,11 +112,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (error) throw new Error(error.message);
   },
 
-  signup: async (name, email, phone, password) => {
+  signup: async (name, email, phone, password, inviteCode) => {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { name: name.trim(), phone: phone.trim() } },
+      // invite_code is validated (and stripped) by the enforce_invite_only
+      // trigger in the database — the client can't skip it.
+      options: {
+        data: {
+          name: name.trim(),
+          phone: phone.trim(),
+          ...(inviteCode ? { invite_code: inviteCode.trim() } : {}),
+        },
+      },
     });
     if (error) throw new Error(error.message);
     if (data.session) return "verified"; // email confirmation disabled → straight in

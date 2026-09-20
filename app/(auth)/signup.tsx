@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "../../components/Screen";
 import { TextField } from "../../components/TextField";
@@ -12,10 +12,15 @@ import { isValidEmail, isValidPhone, isValidName, passwordStrength, emailTypoSug
 import { PasswordMeter } from "../../components/PasswordMeter";
 import { webMaxWidth } from "../../lib/responsive";
 import { safeBack } from "../../lib/nav";
+import { checkInvite, formatInvite, normalizeInvite, signupRequiresInvite, INVITE_MESSAGES } from "../../lib/invite";
 
 export default function SignupScreen() {
   const router = useRouter();
   const signup = useAuthStore((s) => s.signup);
+  const { invite } = useLocalSearchParams<{ invite?: string }>();
+  // Assume a code is needed until the server says otherwise (fails closed).
+  const [requiresInvite, setRequiresInvite] = useState(true);
+  const [inviteCode, setInviteCode] = useState(invite ? formatInvite(String(invite)) : "");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -23,7 +28,12 @@ export default function SignupScreen() {
   const [ageOk, setAgeOk] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => { signupRequiresInvite().then(setRequiresInvite); }, []);
+  // A shared link opened while this screen is already mounted
+  useEffect(() => { if (invite) setInviteCode(formatInvite(String(invite))); }, [invite]);
+
   const onContinue = async () => {
+    if (requiresInvite && !normalizeInvite(inviteCode)) { showError("Enter the invite code you were given.", "Invite code required"); return; }
     if (!ageOk) { showError("You must confirm you are 21 or older to continue.", "Age confirmation required"); return; }
     if (!isValidName(name)) { showError("Enter your full name (at least 2 characters).", "Check your name"); return; }
     if (!isValidEmail(email)) { showError("That doesn't look like a valid email address.", "Check your email"); return; }
@@ -34,7 +44,12 @@ export default function SignupScreen() {
     if (!pw.ok) { showError(pw.hint || "Use at least 8 characters with letters and numbers.", "Weak password"); return; }
     setLoading(true);
     try {
-      const outcome = await signup(name, email, phone, password);
+      if (requiresInvite) {
+        // Friendly, specific message up front; the database still enforces it.
+        const status = await checkInvite(inviteCode, email);
+        if (status !== "ok") { showError(INVITE_MESSAGES[status], "Invite problem"); return; }
+      }
+      const outcome = await signup(name, email, phone, password, requiresInvite ? inviteCode : undefined);
       if (outcome === "needs_otp") {
         router.push({ pathname: "/verify-otp", params: { email: email.trim() } });
       }
@@ -56,10 +71,22 @@ export default function SignupScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={[styles.scroll, webMaxWidth(460)]} keyboardShouldPersistTaps="handled">
           <Text style={styles.heading}>Create account</Text>
-          <Text style={styles.sub}>Start tracking your edges in minutes</Text>
+          <Text style={styles.sub}>
+            {requiresInvite ? "Access is by invitation — enter the code you were given" : "Start tracking your edges in minutes"}
+          </Text>
 
           <View style={{ height: spacing.xl }} />
 
+          {requiresInvite && (
+            <TextField
+              label="Invite code"
+              value={inviteCode}
+              onChangeText={(t) => setInviteCode(t.toUpperCase())}
+              placeholder="XXXXX-XXXXX"
+              icon="ticket-outline"
+              autoCapitalize="characters"
+            />
+          )}
           <TextField label="Full name" value={name} onChangeText={setName} placeholder="Jordan Carter" icon="person-outline" autoCapitalize="words" />
           <TextField label="Email" value={email} onChangeText={setEmail} placeholder="you@email.com" icon="mail-outline" keyboardType="email-address" autoCapitalize="none" />
           <TextField label="Mobile number" value={phone} onChangeText={setPhone} placeholder="+1 555 123 4567" icon="call-outline" keyboardType="phone-pad" />

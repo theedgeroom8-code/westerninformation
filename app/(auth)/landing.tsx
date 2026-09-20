@@ -62,13 +62,14 @@ export default function LandingScreen() {
             </Text>
             <View style={styles.ctaRow}>
               <TouchableOpacity style={styles.primaryCta} onPress={() => router.push("/signup")} activeOpacity={0.85}>
-                <Text style={styles.primaryCtaText}>Get Started</Text>
+                <Text style={styles.primaryCtaText}>Join with an invite</Text>
                 <Ionicons name="arrow-forward" size={17} color={colors.ink} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.secondaryCta} onPress={() => router.push("/login")} activeOpacity={0.8}>
                 <Text style={styles.secondaryCtaText}>I have an account</Text>
               </TouchableOpacity>
             </View>
+            <Text style={styles.inviteNote}>Access is by invitation only.</Text>
           </View>
         </FadeIn>
 
@@ -108,7 +109,7 @@ export default function LandingScreen() {
           <View style={styles.bottomCta}>
             <Text style={styles.bottomTitle}>Ready to see the edge?</Text>
             <TouchableOpacity style={[styles.primaryCta, { alignSelf: "center" }]} onPress={() => router.push("/signup")} activeOpacity={0.85}>
-              <Text style={styles.primaryCtaText}>Create Your Account</Text>
+              <Text style={styles.primaryCtaText}>Use Your Invite</Text>
               <Ionicons name="arrow-forward" size={17} color={colors.ink} />
             </TouchableOpacity>
           </View>
@@ -151,6 +152,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14, paddingHorizontal: spacing.xl, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface,
   },
   secondaryCtaText: { color: colors.text, fontSize: font.body, fontWeight: font.semibold },
+
+  inviteNote: { color: colors.textMuted, fontSize: font.caption, marginTop: spacing.md, textAlign: "center" },
 
   featureRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.lg },
   featureCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.xl, borderWidth: 1, borderColor: colors.border, ...shadow.soft },

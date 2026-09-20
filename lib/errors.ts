@@ -22,6 +22,8 @@ const EXACT_MATCHES: Record<string, string> = {
 };
 
 const PATTERN_MATCHES: Array<[RegExp, string]> = [
+  // The invite gate raises inside the auth insert; GoTrue surfaces it as this.
+  [/database error saving new user|valid invitation code/i, "A valid invite code is required to create an account."],
   [/rate limit|too many requests|429/i, "Too many attempts. Please wait a moment and try again."],
   [/network|fetch failed|failed to fetch|timeout|timed out|abort/i, "Connection problem. Check your internet and try again."],
   [/password.*(at least|too short|weak)|weak password/i, "Password must be at least 8 characters with letters and numbers."],
