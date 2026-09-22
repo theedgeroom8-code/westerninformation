@@ -68,6 +68,25 @@ export default function AdminUsers() {
     load();
   };
 
+  const deleteUser = async (u: any) => {
+    if (u.id === me?.id) { toast("info", "Not allowed", "You can't delete your own account here."); return; }
+    const ok = await confirmAction(
+      "Delete this account completely?",
+      `${u.email}'s login, plays, bankroll history and settings will be permanently erased from the backend. This cannot be undone.`
+    );
+    if (!ok) return;
+    const typed = typeof window !== "undefined" ? window.prompt(`Type ${u.email} to confirm permanent deletion:`) : null;
+    if (typed === null) return; // cancelled
+    if (typed.trim().toLowerCase() !== String(u.email).trim().toLowerCase()) {
+      toast("error", "Not deleted", "That didn't match the account email.");
+      return;
+    }
+    const { data, error } = await supabase.rpc("admin_delete_user", { p_id: u.id });
+    if (error) { showError(error, "Delete failed"); return; }
+    toast("success", "Account deleted", `${data} and all of their data were erased.`);
+    load();
+  };
+
   const UserRow = ({ u, isAdminRow, last }: { u: any; isAdminRow?: boolean; last: boolean }) => (
     <View style={[styles.row, !last && styles.rowBorder, !u.is_active && { opacity: 0.45 }]}>
       <View style={styles.userCell}>
@@ -100,6 +119,14 @@ export default function AdminUsers() {
             {u.is_active ? "Deactivate" : "Activate"}
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.miniBtn, styles.deleteBtn]}
+          onPress={() => deleteUser(u)}
+          activeOpacity={0.8}
+          accessibilityLabel={`Delete ${u.email} completely`}
+        >
+          <Ionicons name="trash-outline" size={12} color={colors.red} />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -115,7 +142,7 @@ export default function AdminUsers() {
           <Text style={[styles.hCell, { flex: 1 }]}>USER</Text>
           <Text style={[styles.hCell, { width: 100, textAlign: "right" }]}>BANKROLL</Text>
           <Text style={[styles.hCell, { width: 50, textAlign: "right" }]}>BETS</Text>
-          <Text style={[styles.hCell, { width: 210, textAlign: "right" }]}>ACTIONS</Text>
+          <Text style={[styles.hCell, { width: 250, textAlign: "right" }]}>ACTIONS</Text>
         </View>
         {users.map((u, i) => <UserRow key={u.id} u={u} last={i === users.length - 1} />)}
         {loaded && users.length === 0 && (
@@ -156,9 +183,10 @@ const styles = StyleSheet.create({
   inactiveTag: { color: colors.red, fontSize: font.caption, fontWeight: font.bold },
   email: { color: colors.textMuted, fontSize: font.caption, marginTop: 1 },
   numCell: { color: colors.text, fontSize: font.small, fontWeight: font.semibold, textAlign: "right", fontVariant: ["tabular-nums"] },
-  actionsCell: { width: 210, flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm },
+  actionsCell: { width: 250, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", gap: spacing.sm },
   miniBtn: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: colors.surfaceHi, paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.sm },
   miniText: { color: colors.textDim, fontSize: font.caption, fontWeight: font.bold },
+  deleteBtn: { backgroundColor: colors.redSoft, paddingHorizontal: 8, minWidth: 28, alignItems: "center", justifyContent: "center" },
   emptyBox: { alignItems: "center", paddingVertical: spacing.xxl, gap: 4 },
   emptyText: { color: colors.textDim, fontSize: font.small, fontWeight: font.semibold, paddingVertical: spacing.sm },
   emptyHint: { color: colors.textMuted, fontSize: font.caption },

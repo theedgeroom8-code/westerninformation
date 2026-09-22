@@ -11,7 +11,11 @@ import { toast } from "../../lib/toast";
 import { webMaxWidth } from "../../lib/responsive";
 import { safeBack } from "../../lib/nav";
 
-const LENGTH = 6;
+// Supabase's email OTP length is a project setting (6–10 digits) that can
+// change without a code deploy — don't hardcode one length or the input
+// silently refuses to accept a longer code than the boxes expect.
+const MIN_LENGTH = 6;
+const MAX_LENGTH = 10;
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
@@ -22,7 +26,10 @@ export default function VerifyOtpScreen() {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
-  const digits = code.padEnd(LENGTH, " ").split("").slice(0, LENGTH);
+  // Show MIN_LENGTH boxes at rest; grow one box at a time as more digits are
+  // typed, up to MAX_LENGTH — so a 6-digit or a 10-digit code both just fit.
+  const boxCount = Math.min(Math.max(MIN_LENGTH, code.length + 1), MAX_LENGTH);
+  const digits = code.padEnd(boxCount, " ").split("").slice(0, boxCount);
 
   const verify = async () => {
     setLoading(true);
@@ -70,7 +77,7 @@ export default function VerifyOtpScreen() {
           </View>
           <Text style={styles.heading}>{isRecovery ? "Enter reset code" : "Verify your account"}</Text>
           <Text style={styles.sub}>
-            We sent a 6-digit code to{"\n"}
+            We sent a verification code to{"\n"}
             <Text style={styles.email}>{email}</Text>
           </Text>
 
@@ -89,11 +96,11 @@ export default function VerifyOtpScreen() {
           <TextInput
             ref={inputRef}
             value={code}
-            onChangeText={(t) => setCode(t.replace(/[^0-9]/g, "").slice(0, LENGTH))}
+            onChangeText={(t) => setCode(t.replace(/[^0-9]/g, "").slice(0, MAX_LENGTH))}
             keyboardType="number-pad"
             style={styles.hiddenInput}
             autoFocus
-            maxLength={LENGTH}
+            maxLength={MAX_LENGTH}
           />
 
           <View style={styles.resendRow}>
@@ -109,7 +116,7 @@ export default function VerifyOtpScreen() {
             icon="checkmark-circle"
             onPress={verify}
             loading={loading}
-            disabled={code.length < LENGTH}
+            disabled={code.length < MIN_LENGTH}
           />
         </View>
       </KeyboardAvoidingView>

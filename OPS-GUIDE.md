@@ -61,8 +61,11 @@ version bump in app.json — the popup can't deliver native code.
 ## Auth & security posture
 
 - Passwords: 8+ chars with letters+numbers enforced in-app with a live meter.
-- Password reset: Login → "Forgot password?" → emailed 6-digit code → new
-  password screen (user is locked there until it's saved).
+- Password reset: Login → "Forgot password?" → emailed verification code → new
+  password screen (user is locked there until it's saved). The code's length
+  is a Supabase project setting (Authentication → Sign In / Providers → Email
+  → OTP Settings → OTP Length, 6–10 digits); the app's entry screen accepts
+  any length in that range, so changing it needs no code change.
 - Sessions never expire — only the Logout button signs a user out (token
   auto-refresh re-arms whenever the app foregrounds).
 - Every RPC re-validates on the server: wager ≤ bankroll, positive amounts,
@@ -74,7 +77,7 @@ version bump in app.json — the popup can't deliver native code.
 
 ### One-time Supabase dashboard tasks (only you can do these — see below)
 1. **Auth → Emails → "Reset Password" template**: the body must include
-   `{{ .Token }}` (the 6-digit code). Suggested body:
+   `{{ .Token }}` (the verification code). Suggested body:
    `<p>Your Edge System password reset code is:</p><h2>{{ .Token }}</h2><p>It expires in 1 hour. If you didn't request this, ignore this email.</p>`
 2. **Auth → Providers → Email**: set minimum password length to **8**.
 3. Later (per roadmap): custom SMTP via Resend, then re-enable "Confirm email"

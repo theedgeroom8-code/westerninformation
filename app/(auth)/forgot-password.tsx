@@ -45,7 +45,7 @@ export default function ForgotPasswordScreen() {
           </View>
           <Text style={styles.heading}>Reset your password</Text>
           <Text style={styles.sub}>
-            Enter the email you signed up with. We'll send a 6-digit code to verify it's you.
+            Enter the email you signed up with. We'll send a verification code to confirm it's you.
           </Text>
 
           <View style={{ height: spacing.xl }} />

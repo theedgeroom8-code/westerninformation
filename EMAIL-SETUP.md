@@ -66,8 +66,11 @@ replace the message body with the matching file from the `emails/` folder
 | Reset password | `Your password reset code — Western Information Network` | `emails/reset-password.html` |
 | Reauthentication | `Confirm it's you — Western Information Network` | `emails/reauthentication.html` |
 
-The app verifies **6-digit codes**, not links — every template shows
-`{{ .Token }}` big and gold. Don't remove that placeholder.
+The app verifies **codes, not links** — every template shows `{{ .Token }}`
+big and gold. Don't remove that placeholder. The app's code-entry screen
+accepts any length Supabase sends (6–10 digits), so it doesn't matter what
+**Authentication → Sign In / Providers → Email → OTP Settings → OTP Length**
+is set to on this project — no code change needed if that setting changes.
 
 ---
 
@@ -88,7 +91,7 @@ The app verifies **6-digit codes**, not links — every template shows
 1. Open the site in a private/incognito window → **Get Started** → sign up
    with a real email you own (not one already registered).
 2. Within ~30 seconds you should get **"Your verification code"** from
-   `noreply@westerninformationnetwork.com` — dark card, gold 6-digit code.
+   `noreply@westerninformationnetwork.com` — dark card, gold code.
 3. Enter the code → you land in onboarding. ✅
 4. Log out → **Sign In → Forgot password** → same flow with the reset email.
 5. In Resend → **Emails** you'll see every send with delivery status —
