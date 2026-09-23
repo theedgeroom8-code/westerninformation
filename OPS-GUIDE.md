@@ -64,8 +64,9 @@ version bump in app.json — the popup can't deliver native code.
 - Password reset: Login → "Forgot password?" → emailed verification code → new
   password screen (user is locked there until it's saved). The code's length
   is a Supabase project setting (Authentication → Sign In / Providers → Email
-  → OTP Settings → OTP Length, 6–10 digits); the app's entry screen accepts
-  any length in that range, so changing it needs no code change.
+  → OTP Settings → OTP Length, currently 8). The app's entry screen mirrors it
+  with the `OTP_LENGTH` constant in `app/(auth)/verify-otp.tsx` — change both
+  together (see EMAIL-SETUP.md, Part 3).
 - Sessions never expire — only the Logout button signs a user out (token
   auto-refresh re-arms whenever the app foregrounds).
 - Every RPC re-validates on the server: wager ≤ bankroll, positive amounts,

@@ -11,11 +11,19 @@ import { toast } from "../../lib/toast";
 import { webMaxWidth } from "../../lib/responsive";
 import { safeBack } from "../../lib/nav";
 
-// Supabase's email OTP length is a project setting (6–10 digits) that can
-// change without a code deploy — don't hardcode one length or the input
-// silently refuses to accept a longer code than the boxes expect.
+// The code length is a Supabase project setting (Authentication → Sign In /
+// Providers → Email → OTP Length) that the app cannot read at runtime, so this
+// constant MUST match it — it drives the box count, the copy ("8-digit"), the
+// "n of 8" counter and auto-submit. Supabase's current default is 8.
+// If the two ever drift the screen still works (any length 6–10 is accepted
+// and the Verify button enables from 6), it just shows the wrong box count.
+const OTP_LENGTH = 8;
 const MIN_LENGTH = 6;
 const MAX_LENGTH = 10;
+
+// Split long codes into two readable groups (1234 5678).
+const GROUP_AFTER = OTP_LENGTH >= 8 && OTP_LENGTH % 2 === 0 ? OTP_LENGTH / 2 : 0;
+const ARTICLE = String(OTP_LENGTH).startsWith("8") ? "an" : "a";
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
@@ -25,27 +33,38 @@ export default function VerifyOtpScreen() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const submitting = useRef(false); // autofill/paste can fire onChangeText twice
 
-  // Show MIN_LENGTH boxes at rest; grow one box at a time as more digits are
-  // typed, up to MAX_LENGTH — so a 6-digit or a 10-digit code both just fit.
-  const boxCount = Math.min(Math.max(MIN_LENGTH, code.length + 1), MAX_LENGTH);
+  // Always show the expected number of boxes up front; only grow past it if
+  // someone genuinely types more (drift safety), up to MAX_LENGTH.
+  const boxCount = Math.min(Math.max(OTP_LENGTH, code.length), MAX_LENGTH);
   const digits = code.padEnd(boxCount, " ").split("").slice(0, boxCount);
 
-  const verify = async () => {
+  const verify = async (value: string = code) => {
+    if (submitting.current) return;
+    submitting.current = true;
     setLoading(true);
     try {
       if (isRecovery) {
-        await verifyRecovery(email || "", code);
+        await verifyRecovery(email || "", value);
         // pendingPasswordReset guard now routes to the new-password screen.
       } else {
-        await verifyOtp(email || "", code);
+        await verifyOtp(email || "", value);
         // Session arrives via onAuthStateChange → root guard routes to onboarding.
       }
     } catch (e: any) {
-      showError(e, "Verification failed");
+      // Too few digits is the likely cause — say so instead of "invalid code".
+      showError(value.length < OTP_LENGTH ? `Enter all ${OTP_LENGTH} digits from the email.` : e, "Verification failed");
     } finally {
       setLoading(false);
+      submitting.current = false;
     }
+  };
+
+  const onChange = (t: string) => {
+    const next = t.replace(/[^0-9]/g, "").slice(0, MAX_LENGTH);
+    setCode(next);
+    if (next.length === OTP_LENGTH) verify(next); // last digit in → go
   };
 
   const resend = async () => {
@@ -55,6 +74,8 @@ export default function VerifyOtpScreen() {
       } else {
         await resendOtp(email || "");
       }
+      setCode(""); // the previous code is void once a new one is sent
+      inputRef.current?.focus();
       if (Platform.OS === "web") toast("success", "Code sent", "A new verification code is on its way.");
       else Alert.alert("Code sent", "A new verification code is on its way.");
     } catch (e: any) {
@@ -77,7 +98,7 @@ export default function VerifyOtpScreen() {
           </View>
           <Text style={styles.heading}>{isRecovery ? "Enter reset code" : "Verify your account"}</Text>
           <Text style={styles.sub}>
-            We sent a verification code to{"\n"}
+            We sent {ARTICLE} {OTP_LENGTH}-digit code to{"\n"}
             <Text style={styles.email}>{email}</Text>
           </Text>
 
@@ -86,18 +107,30 @@ export default function VerifyOtpScreen() {
               const filled = d.trim() !== "";
               const active = i === code.length;
               return (
-                <View key={i} style={[styles.box, (filled || active) && styles.boxActive]}>
+                <View
+                  key={i}
+                  style={[
+                    styles.box,
+                    (filled || active) && styles.boxActive,
+                    GROUP_AFTER > 0 && i === GROUP_AFTER - 1 && styles.boxGroupEnd,
+                  ]}
+                >
                   <Text style={styles.boxText}>{d.trim()}</Text>
                 </View>
               );
             })}
           </TouchableOpacity>
+          <Text style={styles.counter}>
+            {code.length === 0 ? `Enter all ${OTP_LENGTH} digits from the email` : `${code.length} of ${OTP_LENGTH} digits`}
+          </Text>
 
           <TextInput
             ref={inputRef}
             value={code}
-            onChangeText={(t) => setCode(t.replace(/[^0-9]/g, "").slice(0, MAX_LENGTH))}
+            onChangeText={onChange}
             keyboardType="number-pad"
+            textContentType="oneTimeCode"
+            autoComplete="one-time-code"
             style={styles.hiddenInput}
             autoFocus
             maxLength={MAX_LENGTH}
@@ -114,7 +147,7 @@ export default function VerifyOtpScreen() {
           <Button
             label="Verify & Continue"
             icon="checkmark-circle"
-            onPress={verify}
+            onPress={() => verify()}
             loading={loading}
             disabled={code.length < MIN_LENGTH}
           />
@@ -132,10 +165,12 @@ const styles = StyleSheet.create({
   heading: { color: colors.text, fontSize: font.h1, fontWeight: font.heavy, letterSpacing: -0.5 },
   sub: { color: colors.textDim, fontSize: font.body, lineHeight: 22, marginTop: spacing.sm },
   email: { color: colors.text, fontWeight: font.bold },
-  boxes: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.xxl },
+  boxes: { flexDirection: "row", gap: 6, marginTop: spacing.xxl },
   box: { flex: 1, aspectRatio: 0.82, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
   boxActive: { borderColor: colors.gold, backgroundColor: colors.surfaceAlt },
+  boxGroupEnd: { marginRight: spacing.sm },
   boxText: { color: colors.text, fontSize: font.h1, fontWeight: font.heavy },
+  counter: { color: colors.textMuted, fontSize: font.small, textAlign: "center", marginTop: spacing.md, fontVariant: ["tabular-nums"] },
   hiddenInput: { position: "absolute", opacity: 0, height: 1, width: 1 },
   resendRow: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: spacing.xl },
   resendText: { color: colors.textDim, fontSize: font.small },

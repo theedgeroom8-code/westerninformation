@@ -67,10 +67,17 @@ replace the message body with the matching file from the `emails/` folder
 | Reauthentication | `Confirm it's you — Western Information Network` | `emails/reauthentication.html` |
 
 The app verifies **codes, not links** — every template shows `{{ .Token }}`
-big and gold. Don't remove that placeholder. The app's code-entry screen
-accepts any length Supabase sends (6–10 digits), so it doesn't matter what
-**Authentication → Sign In / Providers → Email → OTP Settings → OTP Length**
-is set to on this project — no code change needed if that setting changes.
+big and gold. Don't remove that placeholder.
+
+**Code length — keep these two in sync.** Supabase decides how many digits the
+emailed code has (**Authentication → Sign In / Providers → Email → OTP
+Settings → OTP Length**, currently **8**, its default). The app can't read that
+setting, so the code-entry screen has a matching constant: `OTP_LENGTH` at the
+top of `app/(auth)/verify-otp.tsx`. It drives the number of boxes, the "8-digit"
+wording, the "3 of 8 digits" counter and auto-verify on the last digit. If you
+ever change the dashboard value, change `OTP_LENGTH` to the same number and
+publish an update (web deploy + OTA). If they drift nothing breaks — any code
+of 6–10 digits is still accepted — but users would see the wrong number of boxes.
 
 ---
 
