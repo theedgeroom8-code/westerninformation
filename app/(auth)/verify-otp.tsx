@@ -6,24 +6,17 @@ import { Screen } from "../../components/Screen";
 import { Button } from "../../components/Button";
 import { useAuthStore } from "../../store/authStore";
 import { colors, spacing, radius, font } from "../../theme";
-import { showError } from "../../lib/errors";
+import { showError, friendlyMessage } from "../../lib/errors";
 import { toast } from "../../lib/toast";
 import { webMaxWidth } from "../../lib/responsive";
 import { safeBack } from "../../lib/nav";
 
-// The code length is a Supabase project setting (Authentication → Sign In /
-// Providers → Email → OTP Length) that the app cannot read at runtime, so this
-// constant MUST match it — it drives the box count, the copy ("8-digit"), the
-// "n of 8" counter and auto-submit. Supabase's current default is 8.
-// If the two ever drift the screen still works (any length 6–10 is accepted
-// and the Verify button enables from 6), it just shows the wrong box count.
-const OTP_LENGTH = 8;
-const MIN_LENGTH = 6;
-const MAX_LENGTH = 10;
-
-// Split long codes into two readable groups (1234 5678).
-const GROUP_AFTER = OTP_LENGTH >= 8 && OTP_LENGTH % 2 === 0 ? OTP_LENGTH / 2 : 0;
-const ARTICLE = String(OTP_LENGTH).startsWith("8") ? "an" : "a";
+// The emailed code's length is a Supabase project setting (6–10 digits) that
+// the app can't read — so this screen deliberately never assumes one. One plain
+// field, no fixed slots, no digit count in the copy: whatever length the email
+// carries, the user just types or pastes what they see.
+const MIN_LENGTH = 6;  // shortest code Supabase can issue
+const MAX_LENGTH = 10; // longest
 
 export default function VerifyOtpScreen() {
   const router = useRouter();
@@ -32,39 +25,31 @@ export default function VerifyOtpScreen() {
   const isRecovery = mode === "recovery";
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [focused, setFocused] = useState(true); // the field auto-focuses
   const inputRef = useRef<TextInput>(null);
-  const submitting = useRef(false); // autofill/paste can fire onChangeText twice
+  const submitting = useRef(false); // Enter key + button tap must not double-fire
 
-  // Always show the expected number of boxes up front; only grow past it if
-  // someone genuinely types more (drift safety), up to MAX_LENGTH.
-  const boxCount = Math.min(Math.max(OTP_LENGTH, code.length), MAX_LENGTH);
-  const digits = code.padEnd(boxCount, " ").split("").slice(0, boxCount);
-
-  const verify = async (value: string = code) => {
-    if (submitting.current) return;
+  const verify = async () => {
+    if (submitting.current || code.length < MIN_LENGTH) return;
     submitting.current = true;
     setLoading(true);
     try {
       if (isRecovery) {
-        await verifyRecovery(email || "", value);
+        await verifyRecovery(email || "", code);
         // pendingPasswordReset guard now routes to the new-password screen.
       } else {
-        await verifyOtp(email || "", value);
+        await verifyOtp(email || "", code);
         // Session arrives via onAuthStateChange → root guard routes to onboarding.
       }
     } catch (e: any) {
-      // Too few digits is the likely cause — say so instead of "invalid code".
-      showError(value.length < OTP_LENGTH ? `Enter all ${OTP_LENGTH} digits from the email.` : e, "Verification failed");
+      // A wrong/incomplete/expired code all come back as the same server error —
+      // point at the two things the person can actually do about it.
+      const invalid = /invalid or has expired/i.test(friendlyMessage(e));
+      showError(invalid ? "That code didn't work. Check every digit, or tap Resend." : e, "Verification failed");
     } finally {
       setLoading(false);
       submitting.current = false;
     }
-  };
-
-  const onChange = (t: string) => {
-    const next = t.replace(/[^0-9]/g, "").slice(0, MAX_LENGTH);
-    setCode(next);
-    if (next.length === OTP_LENGTH) verify(next); // last digit in → go
   };
 
   const resend = async () => {
@@ -98,43 +83,38 @@ export default function VerifyOtpScreen() {
           </View>
           <Text style={styles.heading}>{isRecovery ? "Enter reset code" : "Verify your account"}</Text>
           <Text style={styles.sub}>
-            We sent {ARTICLE} {OTP_LENGTH}-digit code to{"\n"}
+            We sent a verification code to{"\n"}
             <Text style={styles.email}>{email}</Text>
           </Text>
 
-          <TouchableOpacity activeOpacity={1} onPress={() => inputRef.current?.focus()} style={styles.boxes}>
-            {digits.map((d, i) => {
-              const filled = d.trim() !== "";
-              const active = i === code.length;
-              return (
-                <View
-                  key={i}
-                  style={[
-                    styles.box,
-                    (filled || active) && styles.boxActive,
-                    GROUP_AFTER > 0 && i === GROUP_AFTER - 1 && styles.boxGroupEnd,
-                  ]}
-                >
-                  <Text style={styles.boxText}>{d.trim()}</Text>
-                </View>
-              );
-            })}
-          </TouchableOpacity>
-          <Text style={styles.counter}>
-            {code.length === 0 ? `Enter all ${OTP_LENGTH} digits from the email` : `${code.length} of ${OTP_LENGTH} digits`}
+          <Text style={styles.label}>Verification code</Text>
+          <View style={[styles.field, focused && styles.fieldFocused]}>
+            <TextInput
+              ref={inputRef}
+              value={code}
+              // No maxLength prop on purpose: it would cut pasted text like "4829 1736 90"
+              // BEFORE the spaces are stripped and drop real digits. Strip first, then cap.
+              onChangeText={(t) => setCode(t.replace(/[^0-9]/g, "").slice(0, MAX_LENGTH))}
+              placeholder="Enter code"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+              inputMode="numeric"
+              textContentType="oneTimeCode"
+              autoComplete="one-time-code"
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={verify}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              accessibilityLabel="Verification code"
+              style={[styles.input, code.length > 0 && styles.inputFilled]}
+            />
+          </View>
+          <Text style={styles.helper}>
+            {code.length === 0
+              ? "Type or paste the full code exactly as it appears in the email."
+              : `${code.length} digit${code.length === 1 ? "" : "s"} entered`}
           </Text>
-
-          <TextInput
-            ref={inputRef}
-            value={code}
-            onChangeText={onChange}
-            keyboardType="number-pad"
-            textContentType="oneTimeCode"
-            autoComplete="one-time-code"
-            style={styles.hiddenInput}
-            autoFocus
-            maxLength={MAX_LENGTH}
-          />
 
           <View style={styles.resendRow}>
             <Text style={styles.resendText}>Didn't get the code?</Text>
@@ -147,7 +127,7 @@ export default function VerifyOtpScreen() {
           <Button
             label="Verify & Continue"
             icon="checkmark-circle"
-            onPress={() => verify()}
+            onPress={verify}
             loading={loading}
             disabled={code.length < MIN_LENGTH}
           />
@@ -165,13 +145,15 @@ const styles = StyleSheet.create({
   heading: { color: colors.text, fontSize: font.h1, fontWeight: font.heavy, letterSpacing: -0.5 },
   sub: { color: colors.textDim, fontSize: font.body, lineHeight: 22, marginTop: spacing.sm },
   email: { color: colors.text, fontWeight: font.bold },
-  boxes: { flexDirection: "row", gap: 6, marginTop: spacing.xxl },
-  box: { flex: 1, aspectRatio: 0.82, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, alignItems: "center", justifyContent: "center" },
-  boxActive: { borderColor: colors.gold, backgroundColor: colors.surfaceAlt },
-  boxGroupEnd: { marginRight: spacing.sm },
-  boxText: { color: colors.text, fontSize: font.h1, fontWeight: font.heavy },
-  counter: { color: colors.textMuted, fontSize: font.small, textAlign: "center", marginTop: spacing.md, fontVariant: ["tabular-nums"] },
-  hiddenInput: { position: "absolute", opacity: 0, height: 1, width: 1 },
+  label: { color: colors.textDim, fontSize: font.small, fontWeight: font.semibold, marginTop: spacing.xxl, marginBottom: spacing.sm },
+  field: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, borderRadius: radius.md, paddingHorizontal: spacing.md },
+  fieldFocused: { borderColor: colors.gold, backgroundColor: colors.surfaceAlt },
+  // outlineStyle: the wrapper's gold border is the focus indicator; without this
+  // the browser adds a second white ring inside it (web only, ignored on native).
+  input: { color: colors.text, fontSize: font.title, fontWeight: font.semibold, textAlign: "center", paddingVertical: spacing.lg, fontVariant: ["tabular-nums"], ...({ outlineStyle: "none" } as any) },
+  // typed digits: big and spaced out so they're easy to compare against the email
+  inputFilled: { fontSize: font.h1, fontWeight: font.heavy, letterSpacing: 8, paddingLeft: 8 },
+  helper: { color: colors.textMuted, fontSize: font.small, textAlign: "center", marginTop: spacing.md },
   resendRow: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: spacing.xl },
   resendText: { color: colors.textDim, fontSize: font.small },
   resendLink: { color: colors.gold, fontSize: font.small, fontWeight: font.bold },

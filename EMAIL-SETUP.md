@@ -69,15 +69,13 @@ replace the message body with the matching file from the `emails/` folder
 The app verifies **codes, not links** — every template shows `{{ .Token }}`
 big and gold. Don't remove that placeholder.
 
-**Code length — keep these two in sync.** Supabase decides how many digits the
+**Code length doesn't matter to the app.** Supabase decides how many digits the
 emailed code has (**Authentication → Sign In / Providers → Email → OTP
-Settings → OTP Length**, currently **8**, its default). The app can't read that
-setting, so the code-entry screen has a matching constant: `OTP_LENGTH` at the
-top of `app/(auth)/verify-otp.tsx`. It drives the number of boxes, the "8-digit"
-wording, the "3 of 8 digits" counter and auto-verify on the last digit. If you
-ever change the dashboard value, change `OTP_LENGTH` to the same number and
-publish an update (web deploy + OTA). If they drift nothing breaks — any code
-of 6–10 digits is still accepted — but users would see the wrong number of boxes.
+Settings → OTP Length**, 6–10; currently **8**, its default). The code-entry
+screen (`app/(auth)/verify-otp.tsx`) deliberately never assumes a length: it's
+one plain field with no fixed slots and no "6-digit"/"8-digit" wording, so users
+just type or paste whatever the email shows. You can change the dashboard value
+any time — no code change, deploy or OTA needed.
 
 ---
 
