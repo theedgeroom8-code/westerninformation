@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { View, Text, FlatList, RefreshControl, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useBettingStore } from "../../store/bettingStore";
+import { supabase } from "../../lib/supabase";
 import { BankrollCard } from "../../components/BankrollCard";
 import { EdgeCard } from "../../components/EdgeCard";
 import { Screen } from "../../components/Screen";
@@ -10,6 +11,52 @@ import { Header } from "../../components/Header";
 import { FilterBar } from "../../components/FilterBar";
 import { useBreakpoint, webMaxWidth } from "../../lib/responsive";
 import { colors, spacing, radius, font } from "../../theme";
+
+// Public track record — every engine play graded against the final score,
+// whether or not anyone logged a bet on it (client asked for this to live on
+// a page everyone can see, not go out as another text).
+interface ResultRow {
+  id: string;
+  matchup: string;
+  specific_bet: string;
+  local_book: string;
+  local_odds: number;
+  edge_pct: number;
+  result: "win" | "loss" | "push";
+  final_away_score: number | null;
+  final_home_score: number | null;
+  game_time: string;
+}
+
+const RESULT_META = {
+  win: { color: colors.green, soft: colors.greenSoft, label: "WON" },
+  loss: { color: colors.red, soft: colors.redSoft, label: "LOST" },
+  push: { color: colors.textDim, soft: "rgba(154,167,189,0.12)", label: "PUSH" },
+} as const;
+
+function ResultCard({ r }: { r: ResultRow }) {
+  const [away, home] = r.matchup.split(" @ ");
+  const meta = RESULT_META[r.result];
+  const hasScore = r.final_away_score != null && r.final_home_score != null;
+  return (
+    <View style={styles.resultCard}>
+      <View style={styles.resultTop}>
+        <Text style={styles.resultMatchup} numberOfLines={1}>{r.matchup}</Text>
+        <View style={[styles.resultPill, { backgroundColor: meta.soft }]}>
+          <Text style={[styles.resultPillText, { color: meta.color }]}>{meta.label}</Text>
+        </View>
+      </View>
+      {hasScore && (
+        <Text style={styles.resultScore}>
+          Final: {away} {r.final_away_score} – {home} {r.final_home_score}
+        </Text>
+      )}
+      <Text style={styles.resultBet} numberOfLines={1}>
+        {r.specific_bet} ({r.local_odds > 0 ? "+" : ""}{r.local_odds}) · {r.edge_pct.toFixed(1)}% edge · {r.local_book}
+      </Text>
+    </View>
+  );
+}
 
 export default function EdgesScreen() {
   const router = useRouter();
@@ -20,6 +67,19 @@ export default function EdgesScreen() {
   const [sport, setSport] = useState("All");
   const [query, setQuery] = useState("");
   const [, forceTick] = useState(0);
+  const [results, setResults] = useState<ResultRow[]>([]);
+
+  const loadResults = useCallback(async () => {
+    const { data } = await supabase
+      .from("edges")
+      .select("id, matchup, specific_bet, local_book, local_odds, edge_pct, result, final_away_score, final_home_score, game_time")
+      .not("result", "is", null)
+      .order("game_time", { ascending: false })
+      .limit(15);
+    setResults((data as ResultRow[] | null) ?? []);
+  }, []);
+
+  useEffect(() => { loadResults(); }, [loadResults]);
 
   // Re-render every 15s so "updated Xs ago" stays honest.
   useEffect(() => {
@@ -48,7 +108,7 @@ export default function EdgesScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refreshEdges(); // resets edgesUpdatedAt → "updated just now"
+    await Promise.all([refreshEdges(), loadResults()]); // resets edgesUpdatedAt → "updated just now"
     setRefreshing(false);
   };
 
@@ -146,6 +206,16 @@ export default function EdgesScreen() {
             <Text style={styles.emptyHint}>Try a different sport or search</Text>
           </View>
         }
+        ListFooterComponent={
+          results.length > 0 ? (
+            <View style={{ marginTop: spacing.lg, paddingHorizontal: spacing.lg }}>
+              <Text style={styles.sectionLabel}>RECENT RESULTS</Text>
+              <View style={{ marginTop: spacing.md, gap: spacing.sm }}>
+                {results.map((r) => <ResultCard key={r.id} r={r} />)}
+              </View>
+            </View>
+          ) : null
+        }
         contentContainerStyle={{ paddingBottom: spacing.xxl, ...webMaxWidth(1160) }}
         showsVerticalScrollIndicator={false}
       />
@@ -186,4 +256,14 @@ const styles = StyleSheet.create({
   empty: { alignItems: "center", paddingTop: 60 },
   emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: font.semibold, marginTop: spacing.md },
   emptyHint: { color: colors.textMuted, fontSize: font.small, marginTop: 4 },
+  resultCard: {
+    backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border,
+    padding: spacing.md,
+  },
+  resultTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
+  resultMatchup: { flex: 1, color: colors.textDim, fontSize: font.caption, fontWeight: font.semibold },
+  resultPill: { paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill },
+  resultPillText: { fontSize: 10, fontWeight: font.heavy, letterSpacing: 0.5 },
+  resultScore: { color: colors.text, fontSize: font.small, fontWeight: font.semibold, marginTop: 6 },
+  resultBet: { color: colors.textMuted, fontSize: font.caption, marginTop: 3 },
 });
