@@ -42,7 +42,9 @@ export default function TabsLayout() {
               backgroundColor: "#0C111D",
               borderTopColor: colors.border,
               borderTopWidth: 1,
-              height: 60 + insets.bottom,
+              // web: icon (28) + label (14) + padding didn't fit in 60px, so react-navigation
+              // squeezed the labels to ~3px — icon-only tabs are hard to tell apart with six of them
+              height: Platform.OS === "web" ? 74 : 60 + insets.bottom,
               paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
               paddingTop: 8,
             },
@@ -53,6 +55,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{ tabBarLabel: "Edges", tabBarIcon: (p) => <TabIcon name="flash" {...p} /> }}
+      />
+      <Tabs.Screen
+        name="games"
+        options={{ tabBarLabel: "Games", tabBarIcon: (p) => <TabIcon name="american-football" {...p} /> }}
       />
       <Tabs.Screen
         name="alerts"

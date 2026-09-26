@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
 import { colors, spacing, radius, font } from "../../theme";
 import { showError } from "../../lib/errors";
+import { etDayKey } from "../../lib/odds";
 
 // Treasure Island folded into Station Sports (client, Aug 2026) — dropped.
 const BOOKS = ["South Point", "Caesars", "DraftKings", "FanDuel", "Wynn", "Coast Casino", "BetMGM", "Circa"];
@@ -26,6 +27,9 @@ interface EngineRun {
   detail: string | null;
 }
 
+// dim (and ignore taps on) settings that only matter while their master switch is on
+const statsDim = (on: boolean) => (on ? undefined : ({ opacity: 0.4, pointerEvents: "none" } as any));
+
 const timeAgo = (iso: string | null) => {
   if (!iso) return "never";
   const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -40,16 +44,35 @@ export default function AdminConfig() {
   const [engine, setEngine] = useState<EngineState | null>(null);
   const [runs, setRuns] = useState<EngineRun[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [spend, setSpend] = useState<{ credits: number; calls: number }>({ credits: 0, calls: 0 });
+  const [gamesTracked, setGamesTracked] = useState(0);
+  const [burn, setBurn] = useState<{ perDay: number } | null>(null);
 
   const load = useCallback(async () => {
-    const [cfg, st, log] = await Promise.all([
+    const [cfg, st, log, sp, gm, first] = await Promise.all([
       supabase.from("app_config").select("*"),
       supabase.from("engine_state").select("*").eq("id", 1).maybeSingle(),
       supabase.from("engine_runs").select("id, at, kind, sport, detail").order("id", { ascending: false }).limit(12),
+      supabase.from("engine_period_spend").select("day, credits, calls").order("day", { ascending: false }).limit(1),
+      supabase.from("games").select("id", { count: "exact", head: true }),
+      // oldest credit reading in the last 24h → credits burned per day
+      supabase.from("engine_runs").select("at, credits_remaining").not("credits_remaining", "is", null)
+        .gte("at", new Date(Date.now() - 24 * 3600e3).toISOString()).order("at", { ascending: true }).limit(1),
     ]);
+    const f = (first.data ?? [])[0] as any;
+    const now = st.data as EngineState | null;
+    if (f && now?.credits_remaining != null) {
+      const hours = (Date.now() - new Date(f.at).getTime()) / 3600e3;
+      const used = f.credits_remaining - now.credits_remaining;
+      setBurn(hours >= 3 && used > 0 ? { perDay: Math.round((used / hours) * 24) } : null);
+    } else setBurn(null);
     setConfig(Object.fromEntries((cfg.data ?? []).map((r: any) => [r.key, r.value])));
     if (st.data) setEngine(st.data as EngineState);
     setRuns((log.data ?? []) as EngineRun[]);
+    // the daily counter is keyed by the Eastern calendar day the engine used
+    const row = (sp.data ?? [])[0] as any;
+    setSpend(row && String(row.day) === etDayKey(Date.now()) ? { credits: row.credits, calls: row.calls } : { credits: 0, calls: 0 });
+    setGamesTracked(gm.count ?? 0);
     setLoaded(true);
   }, []);
 
@@ -90,6 +113,27 @@ export default function AdminConfig() {
   const activeBooks: string[] = config.active_books ?? [];
   const activeSports: string[] = config.active_sports ?? [];
   const flags: Record<string, boolean> = config.feature_flags ?? {};
+  const boardSports: string[] = config.board_sports ?? ["NFL", "NCAAF"];
+  const periodsOn = Boolean(config.period_lines_enabled ?? false);
+  const periodEdgesOn = Boolean(config.period_edges_enabled ?? true);
+  const periodEvery = Number(config.period_refresh_minutes ?? 120);
+  const periodWindow = Number(config.period_window_hours ?? 30);
+  const periodCap = Number(config.period_daily_credit_cap ?? 800);
+  const liveEvery = Number(config.live_score_refresh_minutes ?? 10);
+  const creditsLeft = engine?.credits_remaining ?? null;
+  const reserve = Number(config.credit_reserve ?? 500);
+  // the engine never spends more than 10% of the headroom above the reserve per day
+  const effectiveCap = creditsLeft === null ? periodCap : Math.min(periodCap, Math.floor(Math.max(0, creditsLeft - reserve) * 0.1));
+
+  const chipRow = (key: string, values: number[], current: number, fmt: (v: number) => string) => (
+    <View style={styles.chips}>
+      {values.map((v) => (
+        <TouchableOpacity key={v} style={[styles.chip, current === v && styles.chipOn]} onPress={() => save(key, v)}>
+          <Text style={[styles.chipText, current === v && { color: colors.ink }]}>{fmt(v)}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 
   const toggleList = (key: string, list: string[], item: string) =>
     save(key, list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
@@ -161,7 +205,9 @@ export default function AdminConfig() {
         </View>
 
         <Text style={[styles.label, { marginTop: spacing.lg }]}>Poll interval</Text>
-        <Text style={styles.hint}>Shorter = fresher edges, more API credits burned</Text>
+        <Text style={styles.hint}>
+          Also the refresh rate of the Games board's full-game lines. Shorter = fresher, more credits burned (3 per league per poll).
+        </Text>
         <View style={styles.chips}>
           {[15, 30, 60, 120, 240].map((v) => (
             <TouchableOpacity key={v} style={[styles.chip, interval === v && styles.chipOn]} onPress={() => save("poll_interval_minutes", v)}>
@@ -263,6 +309,103 @@ export default function AdminConfig() {
         </View>
       </View>
 
+      {/* ---------- GAMES BOARD + QUARTER / HALF LINES ---------- */}
+      <Text style={styles.sectionTitle}>GAMES BOARD & QUARTER / HALF LINES</Text>
+      <View style={styles.card}>
+        <Text style={styles.label}>Leagues on the Games board</Text>
+        <Text style={styles.hint}>
+          Full-game spread / total / moneyline for these leagues ride on the regular poll above — no extra credits. Alerts still follow "Monitored sports".
+        </Text>
+        <View style={styles.chips}>
+          {["NFL", "NCAAF"].map((s) => {
+            const on = boardSports.includes(s);
+            return (
+              <TouchableOpacity key={s} style={[styles.chip, on && styles.chipOn]} onPress={() => toggleList("board_sports", boardSports, s)}>
+                <Text style={[styles.chipText, on && { color: colors.ink }]}>{s === "NCAAF" ? "CFB (NCAAF)" : s}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>Quarter & half lines (1H · 2H · 1Q–4Q)</Text>
+            <Text style={styles.hint}>
+              Fetched game by game — about 20 credits per game per refresh. This is the costly part; the caps below keep it bounded.
+            </Text>
+          </View>
+          <Switch
+            value={periodsOn}
+            onValueChange={(v) => save("period_lines_enabled", v)}
+            trackColor={{ false: colors.surfaceHi, true: "rgba(245,184,65,0.4)" }}
+            thumbColor={periodsOn ? colors.gold : colors.textMuted}
+          />
+        </View>
+
+        <View style={statsDim(periodsOn)}>
+          <View style={styles.toggleRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Alert on quarter / half edges</Text>
+              <Text style={styles.hint}>
+                Off = lines still show on the board and comparison, but no edge alerts are sent for 1H/2H/1Q–4Q
+              </Text>
+            </View>
+            <Switch
+              value={periodEdgesOn}
+              onValueChange={(v) => save("period_edges_enabled", v)}
+              trackColor={{ false: colors.surfaceHi, true: "rgba(245,184,65,0.4)" }}
+              thumbColor={periodEdgesOn ? colors.gold : colors.textMuted}
+            />
+          </View>
+
+          <Text style={[styles.label, { marginTop: spacing.sm }]}>Refresh each game every</Text>
+          {chipRow("period_refresh_minutes", [30, 60, 120, 240], periodEvery, (v) => `${v} min`)}
+
+          <Text style={[styles.label, { marginTop: spacing.lg }]}>Only games starting within</Text>
+          <Text style={styles.hint}>Games further out aren't fetched (soonest kickoff is always served first)</Text>
+          {chipRow("period_window_hours", [6, 12, 24, 30, 48], periodWindow, (v) => `${v} h`)}
+
+          <Text style={[styles.label, { marginTop: spacing.lg }]}>Daily credit cap</Text>
+          <Text style={styles.hint}>
+            Hard limit per day (Eastern), paced to at most a quarter of it per hour. The engine also never spends more than 10% of the credits left above the reserve in one day.
+          </Text>
+          {chipRow("period_daily_credit_cap", [100, 200, 400, 800, 1500, 3000, 10000], periodCap, (v) => v.toLocaleString())}
+        </View>
+
+        <Text style={[styles.label, { marginTop: spacing.lg }]}>Live score refresh</Text>
+        <Text style={styles.hint}>Only spends credits while a board game is in progress (2 credits per league per refresh)</Text>
+        {chipRow("live_score_refresh_minutes", [0, 5, 10, 15], liveEvery, (v) => (v === 0 ? "Off" : `${v} min`))}
+
+        <View style={styles.statRow}>
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{spend.credits.toLocaleString()}<Text style={styles.statSub}> / {effectiveCap.toLocaleString()}</Text></Text>
+            <Text style={styles.statLabel}>PERIOD CREDITS TODAY</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{spend.calls}</Text>
+            <Text style={styles.statLabel}>GAME FETCHES TODAY</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{gamesTracked}</Text>
+            <Text style={styles.statLabel}>GAMES TRACKED</Text>
+          </View>
+        </View>
+        {burn && creditsLeft !== null ? (
+          <View style={styles.outlook}>
+            <Ionicons name="speedometer-outline" size={15} color={colors.gold} />
+            <Text style={styles.outlookText}>
+              Credit outlook: burning ≈ {burn.perDay.toLocaleString()} credits/day over the last 24h — {creditsLeft.toLocaleString()} left lasts about{" "}
+              <Text style={{ color: colors.text, fontWeight: font.bold }}>{Math.max(0, Math.floor(creditsLeft / burn.perDay))} days</Text> (compare with the days until your Odds API plan resets).
+            </Text>
+          </View>
+        ) : null}
+        <Text style={[styles.hint, { marginTop: spacing.sm }]}>
+          Rule of thumb: an NFL Sunday (≈16 games) costs ≈ 320 credits per pass with quarter/half lines on; a college Saturday is similar for the marquee games. On the 20,000-credit plan the regular 15-minute poll alone uses ≈ 17,600 a month — keep the cap small, or slow the poll to 30 min, until the plan is upgraded.
+        </Text>
+      </View>
+
       <Text style={styles.sectionTitle}>FEATURE FLAGS</Text>
       <View style={styles.card}>
         {[
@@ -314,6 +457,9 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, backgroundColor: colors.borderSoft, marginHorizontal: spacing.md },
   statValue: { color: colors.text, fontSize: font.title, fontWeight: font.heavy },
   statLabel: { color: colors.textMuted, fontSize: 9, fontWeight: font.bold, letterSpacing: 1, marginTop: 3 },
+  statSub: { color: colors.textMuted, fontSize: font.small, fontWeight: font.semibold },
+  outlook: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm, marginTop: spacing.md, backgroundColor: colors.goldSoft, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: "rgba(245,184,65,0.25)" },
+  outlookText: { flex: 1, color: colors.textDim, fontSize: font.small, lineHeight: 19 },
   logRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, paddingVertical: 5 },
   logDot: { width: 7, height: 7, borderRadius: 4 },
   logTime: { color: colors.textMuted, fontSize: font.caption, width: 70 },

@@ -22,8 +22,21 @@ polling pauses automatically when credits fall to the reserve (500); a rejected
 key disables the engine instantly. Max 5 edges published per sport per scan
 (strongest first) so users are never spammed.
 
-### ⚠ Current blocker: the Odds API key is deactivated
-The Odds API returned: *"API key is deactivated — cancelation or a failed payment."*
+### Games board, quarter/half lines, live scores
+The same engine now also feeds the **Games** tab (NFL + CFB board, quarter/half
+lines, book comparison on Edge Detail). Controls: Admin → Config → *Games board &
+quarter / half lines*. Credit math, plan-tier guidance and the design are in
+**BOARD-GUIDE.md** — read the credit table before raising any cap: on the
+20,000-credit plan the regular 15-minute poll alone is ≈ 17,600 credits a month.
+
+* Full-game poll now uses `bookmakers=` (3 credits per league, was 6).
+* Every active edge is re-verified on every poll and expired if the feed hasn't
+  confirmed it (~3 polls) — even for leagues that are only on the board.
+* `Admin → Config → Recent activity` shows `Half/quarter lines scanned` and any
+  `Response skipped —` errors (a bad API payload is logged, never blocks polling).
+
+### ⚠ If the Odds API key is ever deactivated
+The Odds API returns: *"API key is deactivated — cancelation or a failed payment."*
 The client must renew the plan at https://the-odds-api.com. When you have a working key:
 
 ```bash

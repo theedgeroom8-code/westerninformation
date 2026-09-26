@@ -1,25 +1,54 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert, Platform } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBettingStore } from "../store/bettingStore";
+import { useAuthStore } from "../store/authStore";
 import { Screen } from "../components/Screen";
 import { FadeIn } from "../components/FadeIn";
+import { LineComparison } from "../components/LineComparison";
 import { colors, spacing, radius, font, shadow, getSportMeta } from "../theme";
-import { showError } from "../lib/errors";
+import { showError, friendlyMessage } from "../lib/errors";
 import { toast } from "../lib/toast";
 import { webMaxWidth } from "../lib/responsive";
 import { formatTimeToGame } from "../lib/format";
 import { safeBack } from "../lib/nav";
+import { fetchEdgeComparison } from "../lib/boardApi";
+import { useBoardRealtime } from "../lib/useBoardRealtime";
+import { Comparison, formatKickoff } from "../lib/odds";
 
 export default function EdgeDetailScreen() {
   const { edgeId } = useLocalSearchParams<{ edgeId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { edges, logBet: logBetRpc, recommendedWagerFor } = useBettingStore();
+  const isAdmin = useAuthStore((s) => s.isAdmin);
   const [wager, setWager] = useState("");
   const [logging, setLogging] = useState(false);
+
+  // Book-by-book comparison for this edge (refreshes live as the engine re-polls).
+  const [cmp, setCmp] = useState<Comparison | null>(null);
+  const [cmpLoading, setCmpLoading] = useState(true);
+  const [cmpError, setCmpError] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const loadCmp = useCallback(async () => {
+    if (!edgeId) return;
+    try {
+      setCmp(await fetchEdgeComparison(String(edgeId)));
+      setCmpError(null);
+    } catch (e: any) {
+      setCmpError(friendlyMessage(e));
+    } finally {
+      setCmpLoading(false);
+    }
+  }, [edgeId]);
+  useEffect(() => { loadCmp(); }, [loadCmp]);
+  useBoardRealtime(loadCmp);
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
 
   const edge = edges.find((e) => e.id === edgeId);
 
@@ -97,6 +126,10 @@ export default function EdgeDetailScreen() {
             </View>
 
             <Text style={styles.heroMatchup}>{edge.matchup}</Text>
+            <View style={styles.kickRow}>
+              <Ionicons name="calendar-outline" size={14} color={colors.textDim} />
+              <Text style={styles.kickText}>{formatKickoff(edge.gameTime)}</Text>
+            </View>
 
             <View style={styles.edgeMeter}>
               <View style={{ flex: 1 }}>
@@ -110,8 +143,9 @@ export default function EdgeDetailScreen() {
           </View>
         </FadeIn>
 
-        {/* Actionable play only — the "how" (sharp books / no-vig / fair price) is
-            intentionally hidden from users and lives in the admin dashboard. */}
+        {/* The play itself. The sharp book's identity and raw prices stay in the admin
+            dashboard; per the client's Sep 2026 spec users now see the book comparison
+            and the single fair line their edge is measured against (Line Comparison below). */}
         <FadeIn delay={80}>
           <Text style={styles.sectionTitle}>THE PLAY</Text>
           <View style={styles.card}>
@@ -141,6 +175,18 @@ export default function EdgeDetailScreen() {
               </View>
             ))}
           </View>
+        </FadeIn>
+
+        {/* Every monitored book's number for this market + the fair line the edge is measured against */}
+        <FadeIn delay={120}>
+          <LineComparison
+            data={cmp}
+            loading={cmpLoading}
+            error={cmpError}
+            onRetry={() => { setCmpLoading(true); loadCmp(); }}
+            now={now}
+            admin={isAdmin}
+          />
         </FadeIn>
 
         <FadeIn delay={160}>
@@ -238,7 +284,9 @@ const styles = StyleSheet.create({
   sportText: { fontSize: font.caption, fontWeight: font.bold, letterSpacing: 0.5 },
   timeTag: { flexDirection: "row", alignItems: "center", gap: 4 },
   timeText: { color: colors.gold, fontSize: font.caption, fontWeight: font.bold },
-  heroMatchup: { color: colors.text, fontSize: font.h1, fontWeight: font.heavy, letterSpacing: -0.5, marginBottom: spacing.lg },
+  heroMatchup: { color: colors.text, fontSize: font.h1, fontWeight: font.heavy, letterSpacing: -0.5, marginBottom: spacing.sm },
+  kickRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: spacing.lg },
+  kickText: { color: colors.textDim, fontSize: font.small, fontWeight: font.semibold },
   edgeMeter: {
     flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0,0,0,0.25)",
     borderRadius: radius.lg, padding: spacing.lg,

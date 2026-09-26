@@ -5,8 +5,32 @@ import { format } from "date-fns";
 import { supabase } from "../../lib/supabase";
 import { noVig } from "../../lib/kelly";
 import { colors, spacing, radius, font } from "../../theme";
-import { showError } from "../../lib/errors";
+import { showError, friendlyMessage } from "../../lib/errors";
 import { toast, confirmAction } from "../../lib/toast";
+import { LineComparison } from "../../components/LineComparison";
+import { fetchEdgeComparison } from "../../lib/boardApi";
+import { useBoardRealtime } from "../../lib/useBoardRealtime";
+import { Comparison } from "../../lib/odds";
+
+// The same book-by-book comparison users see on Edge Detail, plus the raw sharp
+// line (admin only) — so admin and user prices/timestamps can never disagree.
+function EdgeBooks({ edgeId }: { edgeId: string }) {
+  const [data, setData] = useState<Comparison | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    try { setData(await fetchEdgeComparison(edgeId)); setError(null); }
+    catch (e: any) { setError(friendlyMessage(e)); }
+    finally { setLoading(false); }
+  }, [edgeId]);
+  useEffect(() => { load(); }, [load]);
+  useBoardRealtime(load);
+  return (
+    <View style={{ marginTop: spacing.md }}>
+      <LineComparison data={data} loading={loading} error={error} onRetry={() => { setLoading(true); load(); }} admin />
+    </View>
+  );
+}
 
 const SPORTS = ["NFL", "NBA", "WNBA", "MLB", "NHL", "NCAAF", "NCAAB"];
 const BET_TYPES = ["Game Spread", "1st Half Spread", "Game Total", "1st Half Total", "Moneyline", "F5 Moneyline"];
@@ -256,6 +280,8 @@ export default function AdminEdges() {
                 ) : (
                   <Text style={styles.methodNotes}>No method record.</Text>
                 )}
+
+                {e.event_id ? <EdgeBooks edgeId={e.id} /> : null}
 
                 <View style={styles.actionsRow}>
                   <TouchableOpacity

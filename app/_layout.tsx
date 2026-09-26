@@ -138,6 +138,7 @@ export default function RootLayout() {
               <Stack.Protected guard={hasOnboarded}>
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="edge-detail" options={{ presentation: "modal" }} />
+                <Stack.Screen name="market-detail" options={{ presentation: "modal" }} />
                 <Stack.Screen name="adjust-bankroll" options={{ presentation: "modal" }} />
                 <Stack.Screen name="settings" />
                 <Stack.Screen name="two-factor" />

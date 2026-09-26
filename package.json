@@ -51,7 +51,9 @@
     "engine-test": "node scripts/engine-test.js",
     "engine-selftest": "node scripts/engine-selftest.js",
     "publish-update": "eas update --channel preview",
-    "deploy-web": "expo export --platform web && vercel deploy dist --prod --yes"
+    "deploy-web": "expo export --platform web && vercel deploy dist --prod --yes",
+    "board-selftest": "node scripts/board-selftest.js",
+    "odds-selftest": "node scripts/odds-selftest.mjs"
   },
   "private": true
 }

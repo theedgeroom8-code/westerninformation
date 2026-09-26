@@ -8,6 +8,7 @@ import { colors, spacing, radius, font } from "../theme";
 
 const NAV = [
   { href: "/", icon: "flash", label: "Edges" },
+  { href: "/games", icon: "american-football", label: "Games" },
   { href: "/alerts", icon: "notifications", label: "Alerts" },
   { href: "/bets", icon: "receipt", label: "My Plays" },
   { href: "/bankroll", icon: "wallet", label: "Balance" },

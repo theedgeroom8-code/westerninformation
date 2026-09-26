@@ -32,6 +32,11 @@ const toEdge = (r: any): Edge => ({
   gameTime: new Date(r.game_time),
   alertTime: new Date(r.alert_time),
   rotationNumber: r.rotation_number ?? null,
+  eventId: r.event_id ?? null,
+  marketKey: r.market_key ?? null,
+  outcomeName: r.outcome_name ?? null,
+  point: r.point === null || r.point === undefined ? null : Number(r.point),
+  period: r.period ?? "FG",
 });
 
 const toBet = (r: any): Bet => ({

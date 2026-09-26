@@ -17,6 +17,16 @@ export interface Edge {
   alertTime: Date;
   /** Official Nevada rotation number (e.g. 457) — quoted at the betting window. */
   rotationNumber: number | null;
+  /** Odds-API event id (engine edges) — links the edge to its game on the board. */
+  eventId: string | null;
+  /** Base market: h2h | spreads | totals (period lives in `period`). */
+  marketKey: string | null;
+  /** Side the play is on: team name, "Over" or "Under". */
+  outcomeName: string | null;
+  /** The line the edge was found at (spread / total); null for moneylines. */
+  point: number | null;
+  /** FG = full game; otherwise 1H / 2H / 1Q / 2Q / 3Q / 4Q. */
+  period: "FG" | "1H" | "2H" | "1Q" | "2Q" | "3Q" | "4Q";
 }
 
 // Snapshot of the edge at log time (stored flat on the bets row).

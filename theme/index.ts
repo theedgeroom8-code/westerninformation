@@ -87,7 +87,10 @@ export const shadow = {
 // Per-sport color + icon mapping for quick visual scanning.
 export const sportMeta: Record<string, { color: string; icon: string }> = {
   NFL: { color: "#F5B841", icon: "american-football" },
+  NCAAF: { color: "#F5B841", icon: "american-football" },
   NBA: { color: "#FB923C", icon: "basketball" },
+  WNBA: { color: "#FB923C", icon: "basketball" },
+  NCAAB: { color: "#FB923C", icon: "basketball" },
   MLB: { color: "#60A5FA", icon: "baseball" },
   NHL: { color: "#22D3EE", icon: "snow" },
   Default: { color: "#94A3B8", icon: "trophy" },
