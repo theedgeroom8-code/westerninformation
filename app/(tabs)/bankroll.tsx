@@ -116,7 +116,7 @@ export default function BankrollScreen() {
                             <Text style={styles.plCount}>· {v.count} bets</Text>
                           </View>
                           <Text style={[styles.plValue, { color: up ? colors.green : colors.red }]}>
-                            {up ? "+" : "−"}${Math.abs(v.pl)}
+                            {up ? "+" : "−"}${Math.abs(v.pl).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </Text>
                         </View>
                         <View style={styles.barTrack}>
