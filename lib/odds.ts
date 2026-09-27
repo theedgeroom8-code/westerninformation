@@ -70,14 +70,13 @@ export interface Comparison {
 // ---------------------------------------------------------------------------
 // Periods
 // ---------------------------------------------------------------------------
+// Client (2026-09-27): "Do not use or worry about 2Q 3Q 4Q or 2H. Just game
+// and 1H." Period stays a 7-value type (the DB still allows all of them, and
+// old graded edges may reference a dropped period), but only these two drive
+// the chips/UI now.
 export const PERIODS: { key: Period; label: string; name: string; rule: string }[] = [
   { key: "FG", label: "Full Game", name: "Full Game", rule: "Full game — overtime included." },
   { key: "1H", label: "1H", name: "1st Half", rule: "First half only — overtime not included." },
-  { key: "2H", label: "2H", name: "2nd Half", rule: "Second half. Overtime treatment varies by sportsbook — check the book's rules." },
-  { key: "1Q", label: "1Q", name: "1st Quarter", rule: "First quarter only — overtime not included." },
-  { key: "2Q", label: "2Q", name: "2nd Quarter", rule: "Second quarter only — overtime not included." },
-  { key: "3Q", label: "3Q", name: "3rd Quarter", rule: "Third quarter only — overtime not included." },
-  { key: "4Q", label: "4Q", name: "4th Quarter", rule: "Fourth quarter. Overtime treatment varies by sportsbook — check the book's rules." },
 ];
 export const periodMeta = (p: Period) => PERIODS.find((x) => x.key === p) ?? PERIODS[0];
 
@@ -103,6 +102,15 @@ export function fmtPoint(p: number | null | undefined, signed = false): string {
   const body = Number.isInteger(abs) ? String(abs) : String(abs);
   if (p < 0) return `${MINUS}${body}`;
   return signed && p > 0 ? `+${body}` : body;
+}
+
+/** "U 45.5 / +102" for a total, "−3.5 / −110" for a spread, "+140" for a moneyline */
+export function fmtFairLine(market: MarketKey, outcome: string, fair: { price: number; point?: number | null }): string {
+  if (market === "h2h" || market === "h2h3") return fmtPrice(fair.price);
+  const line = market === "totals"
+    ? `${outcome === "Under" ? "U" : "O"} ${fmtPoint(fair.point)}`
+    : fmtPoint(fair.point, true);
+  return `${line} / ${fmtPrice(fair.price)}`;
 }
 
 export const decimalOdds = (price: number): number =>

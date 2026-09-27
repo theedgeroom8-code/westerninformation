@@ -309,8 +309,8 @@ export default function AdminConfig() {
         </View>
       </View>
 
-      {/* ---------- GAMES BOARD + QUARTER / HALF LINES ---------- */}
-      <Text style={styles.sectionTitle}>GAMES BOARD & QUARTER / HALF LINES</Text>
+      {/* ---------- GAMES BOARD + 1H LINES ---------- */}
+      <Text style={styles.sectionTitle}>GAMES BOARD & 1H LINES</Text>
       <View style={styles.card}>
         <Text style={styles.label}>Leagues on the Games board</Text>
         <Text style={styles.hint}>
@@ -329,9 +329,9 @@ export default function AdminConfig() {
 
         <View style={styles.toggleRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Quarter & half lines (1H · 2H · 1Q–4Q)</Text>
+            <Text style={styles.label}>1st-half lines</Text>
             <Text style={styles.hint}>
-              Fetched game by game — about 20 credits per game per refresh. This is the costly part; the caps below keep it bounded.
+              Client only wants Full Game and 1H (2H/1Q–4Q dropped) — fetched game by game, about 3–4 credits per game per refresh now that it's just 1H's markets.
             </Text>
           </View>
           <Switch
@@ -345,9 +345,9 @@ export default function AdminConfig() {
         <View style={statsDim(periodsOn)}>
           <View style={styles.toggleRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Alert on quarter / half edges</Text>
+              <Text style={styles.label}>Alert on 1H edges</Text>
               <Text style={styles.hint}>
-                Off = lines still show on the board and comparison, but no edge alerts are sent for 1H/2H/1Q–4Q
+                Off = the 1H line still shows on the board, but no edge alerts are sent for it
               </Text>
             </View>
             <Switch
@@ -359,7 +359,7 @@ export default function AdminConfig() {
           </View>
 
           <Text style={[styles.label, { marginTop: spacing.sm }]}>Refresh each game every</Text>
-          {chipRow("period_refresh_minutes", [30, 60, 120, 240], periodEvery, (v) => `${v} min`)}
+          {chipRow("period_refresh_minutes", [15, 30, 60, 120, 240], periodEvery, (v) => `${v} min`)}
 
           <Text style={[styles.label, { marginTop: spacing.lg }]}>Only games starting within</Text>
           <Text style={styles.hint}>Games further out aren't fetched (soonest kickoff is always served first)</Text>
@@ -402,7 +402,7 @@ export default function AdminConfig() {
           </View>
         ) : null}
         <Text style={[styles.hint, { marginTop: spacing.sm }]}>
-          Rule of thumb: an NFL Sunday (≈16 games) costs ≈ 320 credits per pass with quarter/half lines on; a college Saturday is similar for the marquee games. On the 20,000-credit plan the regular 15-minute poll alone uses ≈ 17,600 a month — keep the cap small, or slow the poll to 30 min, until the plan is upgraded.
+          Rule of thumb: an NFL Sunday (≈16 games) costs ≈ 50–65 credits per pass now that it's 1H only (was ≈ 320 with all periods on); a college Saturday is similar for the marquee games. On the 20,000-credit plan the regular 15-minute poll alone uses ≈ 17,600 a month, so there's plenty of headroom left for 1H at 15 min too.
         </Text>
       </View>
 

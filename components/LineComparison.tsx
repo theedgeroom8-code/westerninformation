@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, Linking, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
-  Comparison, MarketKey, BOOK_LINKS, rankRows, diffVsBest, fmtLine, fmtPrice, fmtPoint,
+  Comparison, MarketKey, BOOK_LINKS, rankRows, diffVsBest, fmtLine, fmtFairLine,
   sideHeaderShort, timeAgo, periodMeta,
 } from "../lib/odds";
 import { colors, spacing, radius, font, shadow } from "../theme";
@@ -122,9 +122,7 @@ export const LineComparison: React.FC<Props> = ({ data, loading, error, onRetry,
                   </Text>
                 </View>
                 <Text style={[styles.value, { color: colors.gold, flex: 1.15 }, data.fair.stale && styles.dim]} numberOfLines={1}>
-                  {market === "h2h" || market === "h2h3"
-                    ? fmtPrice(data.fair.price)
-                    : `${market === "totals" ? (outcome === "Under" ? "U" : "O") + " " + fmtPoint(data.fair.point) : fmtPoint(data.fair.point, true)} / ${fmtPrice(data.fair.price)}`}
+                  {fmtFairLine(market, outcome, data.fair)}
                 </Text>
                 <Text style={[styles.diff, { color: colors.textMuted }]}>—</Text>
               </View>

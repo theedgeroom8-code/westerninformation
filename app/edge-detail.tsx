@@ -16,7 +16,7 @@ import { formatTimeToGame } from "../lib/format";
 import { safeBack } from "../lib/nav";
 import { fetchEdgeComparison } from "../lib/boardApi";
 import { useBoardRealtime } from "../lib/useBoardRealtime";
-import { Comparison, formatKickoff } from "../lib/odds";
+import { Comparison, formatKickoff, fmtFairLine } from "../lib/odds";
 
 export default function EdgeDetailScreen() {
   const { edgeId } = useLocalSearchParams<{ edgeId: string }>();
@@ -143,9 +143,10 @@ export default function EdgeDetailScreen() {
           </View>
         </FadeIn>
 
-        {/* The play itself. The sharp book's identity and raw prices stay in the admin
-            dashboard; per the client's Sep 2026 spec users now see the book comparison
-            and the single fair line their edge is measured against (Line Comparison below). */}
+        {/* The play itself. Client (2026-09-27): players see only the play we send
+            them — no book-by-book comparison — plus the fair price, time, and
+            suggested amount. The sharp book's identity stays admin-only; the fair
+            PRICE is shown as a plain row above, not the ranked comparison table. */}
         <FadeIn delay={80}>
           <Text style={styles.sectionTitle}>THE PLAY</Text>
           <View style={styles.card}>
@@ -164,6 +165,7 @@ export default function EdgeDetailScreen() {
             {[
               ["Source", edge.localBook, "business-outline"],
               ["Line to take", `${edge.localOdds > 0 ? "+" : ""}${edge.localOdds}`, "pricetag-outline"],
+              ["Fair price", cmp?.fair ? fmtFairLine(cmp.market, cmp.outcome, cmp.fair) : cmpLoading ? "—" : "Not available", "analytics-outline"],
               ["Game starts", timeLabel + " from now", "time-outline"],
             ].map(([label, value, icon], i, arr) => (
               <View key={i} style={[styles.row, i === arr.length - 1 && { borderBottomWidth: 0 }]}>
@@ -177,17 +179,19 @@ export default function EdgeDetailScreen() {
           </View>
         </FadeIn>
 
-        {/* Every monitored book's number for this market + the fair line the edge is measured against */}
-        <FadeIn delay={120}>
-          <LineComparison
-            data={cmp}
-            loading={cmpLoading}
-            error={cmpError}
-            onRetry={() => { setCmpLoading(true); loadCmp(); }}
-            now={now}
-            admin={isAdmin}
-          />
-        </FadeIn>
+        {/* Admin-only: every monitored book's number for this market, for internal review */}
+        {isAdmin ? (
+          <FadeIn delay={120}>
+            <LineComparison
+              data={cmp}
+              loading={cmpLoading}
+              error={cmpError}
+              onRetry={() => { setCmpLoading(true); loadCmp(); }}
+              now={now}
+              admin={isAdmin}
+            />
+          </FadeIn>
+        ) : null}
 
         <FadeIn delay={160}>
           <Text style={styles.sectionTitle}>SUGGESTED AMOUNT</Text>
