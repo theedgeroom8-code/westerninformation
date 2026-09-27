@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: font.semibold, marginBottom: spacing.sm },
   amountRow: { flexDirection: "row", alignItems: "center", backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
   dollar: { color: colors.textDim, fontSize: font.h1, fontWeight: font.bold },
-  amountInput: { flex: 1, color: colors.text, fontSize: font.h1, fontWeight: font.heavy, paddingVertical: spacing.md, marginLeft: 4 },
+  amountInput: { flex: 1, minWidth: 0, color: colors.text, fontSize: font.h1, fontWeight: font.heavy, paddingVertical: spacing.md, marginLeft: 4 },
   preview: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: colors.surfaceAlt, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
   previewLabel: { color: colors.textDim, fontSize: font.body },
   previewValue: { fontSize: font.h2, fontWeight: font.heavy },

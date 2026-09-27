@@ -24,6 +24,18 @@ interface Props {
 
 const toneColor = { best: colors.textMuted, worse: colors.red, better: colors.green, same: colors.textMuted } as const;
 
+/** Point and price on separate lines so neither gets clipped on a narrow phone
+ *  (a single "O 45.5 / −110" string doesn't fit the value column on many devices). */
+const ValueCell: React.FC<{ text: string; color?: string; dim?: boolean }> = ({ text, color, dim }) => {
+  const [top, bottom] = text.split(" / ");
+  return (
+    <View style={{ flex: 1.15, alignItems: "flex-end" }}>
+      <Text style={[styles.value, color ? { color } : null, dim && styles.dim]} numberOfLines={1}>{top}</Text>
+      {bottom ? <Text style={[styles.valueSub, color ? { color } : null, dim && styles.dim]} numberOfLines={1}>{bottom}</Text> : null}
+    </View>
+  );
+};
+
 /** Every monitored sportsbook's number for one market, best → worst, plus the
  *  fair line when the market carries an active edge. */
 export const LineComparison: React.FC<Props> = ({ data, loading, error, onRetry, now = Date.now(), admin, emptyHint, showRule = true }) => {
@@ -102,9 +114,7 @@ export const LineComparison: React.FC<Props> = ({ data, loading, error, onRetry,
                       {r.stale ? "Delayed · " : "Updated "}{timeAgo(r.updatedAt, now)}
                     </Text>
                   </View>
-                  <Text style={[styles.value, isSource && { color: colors.gold }, r.stale && styles.dim, { flex: 1.15 }]} numberOfLines={1}>
-                    {fmtLine(market, outcome, r)}
-                  </Text>
+                  <ValueCell text={fmtLine(market, outcome, r)} color={isSource ? colors.gold : undefined} dim={r.stale} />
                   <Text style={[styles.diff, { color: toneColor[d.tone] }, r.stale && styles.dim]}>{d.text}</Text>
                 </TouchableOpacity>
               );
@@ -121,9 +131,7 @@ export const LineComparison: React.FC<Props> = ({ data, loading, error, onRetry,
                     Sharp benchmark · {data.fair.stale ? "when found" : timeAgo(data.fair.updatedAt, now)}
                   </Text>
                 </View>
-                <Text style={[styles.value, { color: colors.gold, flex: 1.15 }, data.fair.stale && styles.dim]} numberOfLines={1}>
-                  {fmtFairLine(market, outcome, data.fair)}
-                </Text>
+                <ValueCell text={fmtFairLine(market, outcome, data.fair)} color={colors.gold} dim={data.fair.stale} />
                 <Text style={[styles.diff, { color: colors.textMuted }]}>—</Text>
               </View>
             ) : null}
@@ -134,9 +142,7 @@ export const LineComparison: React.FC<Props> = ({ data, loading, error, onRetry,
                   <Text style={[styles.book, { color: colors.blue }]}>{data.sharp.book}</Text>
                   <Text style={styles.updated}>Sharp (admin only) · {timeAgo(data.sharp.updatedAt, now)}</Text>
                 </View>
-                <Text style={[styles.value, { color: colors.blue, flex: 1.15 }]} numberOfLines={1}>
-                  {fmtLine(market, outcome, { point: data.sharp.point, price: data.sharp.price })}
-                </Text>
+                <ValueCell text={fmtLine(market, outcome, { point: data.sharp.point, price: data.sharp.price })} color={colors.blue} />
                 <Text style={[styles.diff, { color: colors.textMuted }]}>—</Text>
               </View>
             ) : null}
@@ -168,6 +174,7 @@ const styles = StyleSheet.create({
   tag: { color: colors.gold, fontSize: 9, fontWeight: font.heavy, letterSpacing: 0.8, marginTop: 2 },
   updated: { color: colors.textMuted, fontSize: 10.5, marginTop: 2 },
   value: { color: colors.text, fontSize: font.body, fontWeight: font.heavy, textAlign: "right", fontVariant: ["tabular-nums"] },
+  valueSub: { color: colors.textMuted, fontSize: 11, fontWeight: font.semibold, textAlign: "right", fontVariant: ["tabular-nums"], marginTop: 1 },
   diff: { width: 64, textAlign: "right", fontSize: font.small, fontWeight: font.bold, fontVariant: ["tabular-nums"] },
   dim: { opacity: 0.5 },
   msgWrap: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xl },
