@@ -36,6 +36,8 @@ export interface BoardMeta {
   periodRefreshMin?: number;
   periodEnabled: boolean;
   periodWindowHours: number;
+  /** Minimum edge % a game needs to appear on the player-facing board (client, 2026-10-04). */
+  highEdgeThreshold?: number;
 }
 
 export interface LineRow {

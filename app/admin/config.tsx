@@ -108,6 +108,7 @@ export default function AdminConfig() {
   const engineOn = Boolean(config.engine_enabled ?? false);
   const interval = Number(config.poll_interval_minutes ?? 60);
   const threshold = Number(config.min_edge_threshold ?? 2);
+  const highThreshold = Number(config.high_edge_threshold ?? 5);
   const cutoff = Number(config.pre_game_cutoff_minutes ?? 30);
   const dupSuppression = Boolean(config.duplicate_suppression ?? true);
   const activeBooks: string[] = config.active_books ?? [];
@@ -238,11 +239,24 @@ export default function AdminConfig() {
       <Text style={styles.sectionTitle}>EDGE DETECTION</Text>
       <View style={styles.card}>
         <Text style={styles.label}>Minimum edge threshold</Text>
-        <Text style={styles.hint}>Edges below this are discarded by the engine</Text>
+        <Text style={styles.hint}>Edges below this are discarded by the engine entirely</Text>
         <View style={styles.chips}>
           {[1, 1.5, 2, 2.5, 3].map((v) => (
             <TouchableOpacity key={v} style={[styles.chip, threshold === v && styles.chipOn]} onPress={() => save("min_edge_threshold", v)}>
               <Text style={[styles.chipText, threshold === v && { color: colors.ink }]}>{v}%</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={[styles.label, { marginTop: spacing.lg }]}>High-edge alert threshold</Text>
+        <Text style={styles.hint}>
+          Client (2026-10-04): alerts (push + SMS) only fire at/above this. Weaker edges between the two
+          thresholds are still created and tracked — they just stay quiet and off the player's Games board.
+        </Text>
+        <View style={styles.chips}>
+          {[3, 4, 5, 6, 8, 10].map((v) => (
+            <TouchableOpacity key={v} style={[styles.chip, highThreshold === v && styles.chipOn]} onPress={() => save("high_edge_threshold", v)}>
+              <Text style={[styles.chipText, highThreshold === v && { color: colors.ink }]}>{v}%</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -315,6 +329,7 @@ export default function AdminConfig() {
         <Text style={styles.label}>Leagues on the Games board</Text>
         <Text style={styles.hint}>
           Full-game spread / total / moneyline for these leagues ride on the regular poll above — no extra credits. Alerts still follow "Monitored sports".
+          Players only see games with a live high edge (threshold above) — this doesn't change what's fetched, only what's displayed.
         </Text>
         <View style={styles.chips}>
           {["NFL", "NCAAF"].map((s) => {
@@ -362,8 +377,11 @@ export default function AdminConfig() {
           {chipRow("period_refresh_minutes", [15, 30, 60, 120, 240], periodEvery, (v) => `${v} min`)}
 
           <Text style={[styles.label, { marginTop: spacing.lg }]}>Only games starting within</Text>
-          <Text style={styles.hint}>Games further out aren't fetched (soonest kickoff is always served first)</Text>
-          {chipRow("period_window_hours", [6, 12, 24, 30, 48], periodWindow, (v) => `${v} h`)}
+          <Text style={styles.hint}>
+            Client (2026-10-04): track 1H as soon as books post it during the week, not just near kickoff —
+            168h covers a full week. Games further out aren't fetched (soonest kickoff is always served first).
+          </Text>
+          {chipRow("period_window_hours", [6, 12, 24, 48, 72, 120, 168], periodWindow, (v) => (v >= 168 ? "1 wk" : `${v} h`))}
 
           <Text style={[styles.label, { marginTop: spacing.lg }]}>Daily credit cap</Text>
           <Text style={styles.hint}>

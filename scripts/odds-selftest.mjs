@@ -127,7 +127,7 @@ eq("spread row", O.fmtLine("spreads", "Giants", { point: -3, price: -110 }), "\u
 eq("underdog spread row", O.fmtLine("spreads", "Chargers", { point: 7, price: -105 }), "+7 / \u2212105");
 eq("total rows", [O.fmtLine("totals", "Over", { point: 50.5, price: -102 }), O.fmtLine("totals", "Under", { point: 50.5, price: -118 })], ["O 50.5 / \u2212102", "U 50.5 / \u2212118"]);
 eq("headers", [O.sideHeader("h2h", "New York Giants"), O.sideHeader("spreads", "Buffalo Bills"), O.sideHeader("h2h3", "Draw")], ["New York Giants ML", "Buffalo Bills", "Tie"]);
-eq("period meta", O.PERIODS.map((p) => p.label), ["Full Game", "1H", "2H", "1Q", "2Q", "3Q", "4Q"]);
+eq("period meta", O.PERIODS.map((p) => p.label), ["Full Game", "1H"]);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

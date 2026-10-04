@@ -1,10 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity, Linking, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Comparison, MarketKey, BOOK_LINKS, rankRows, diffVsBest, fmtLine, fmtFairLine,
   sideHeaderShort, timeAgo, periodMeta,
 } from "../lib/odds";
+import { openExternal } from "../lib/externalLink";
 import { colors, spacing, radius, font, shadow } from "../theme";
 
 interface Props {
@@ -47,7 +48,7 @@ export const LineComparison: React.FC<Props> = ({ data, loading, error, onRetry,
 
   const open = (book: string) => {
     const url = BOOK_LINKS[book];
-    if (url) Linking.openURL(url).catch(() => {});
+    if (url) openExternal(url);
   };
 
   return (

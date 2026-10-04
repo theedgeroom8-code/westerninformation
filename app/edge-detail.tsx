@@ -16,7 +16,8 @@ import { formatTimeToGame } from "../lib/format";
 import { safeBack } from "../lib/nav";
 import { fetchEdgeComparison } from "../lib/boardApi";
 import { useBoardRealtime } from "../lib/useBoardRealtime";
-import { Comparison, formatKickoff, fmtFairLine } from "../lib/odds";
+import { Comparison, formatKickoff, fmtFairLine, BOOK_LINKS } from "../lib/odds";
+import { openExternal } from "../lib/externalLink";
 
 export default function EdgeDetailScreen() {
   const { edgeId } = useLocalSearchParams<{ edgeId: string }>();
@@ -162,8 +163,35 @@ export default function EdgeDetailScreen() {
               </View>
             </View>
             <View style={styles.divider} />
+
+            {BOOK_LINKS[edge.localBook] ? (
+              <TouchableOpacity
+                style={styles.row}
+                onPress={() => openExternal(BOOK_LINKS[edge.localBook])}
+                activeOpacity={0.7}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${edge.localBook}`}
+              >
+                <View style={styles.rowLeft}>
+                  <Ionicons name="business-outline" size={15} color={colors.textMuted} />
+                  <Text style={styles.rowLabel}>Source</Text>
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                  <Text style={[styles.rowValue, { color: colors.gold }]}>{edge.localBook}</Text>
+                  <Ionicons name="open-outline" size={14} color={colors.gold} />
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <Ionicons name="business-outline" size={15} color={colors.textMuted} />
+                  <Text style={styles.rowLabel}>Source</Text>
+                </View>
+                <Text style={styles.rowValue}>{edge.localBook}</Text>
+              </View>
+            )}
+
             {[
-              ["Source", edge.localBook, "business-outline"],
               ["Line to take", `${edge.localOdds > 0 ? "+" : ""}${edge.localOdds}`, "pricetag-outline"],
               ["Fair price", cmp?.fair ? fmtFairLine(cmp.market, cmp.outcome, cmp.fair) : cmpLoading ? "—" : "Not available", "analytics-outline"],
               ["Game starts", timeLabel + " from now", "time-outline"],

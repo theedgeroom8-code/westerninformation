@@ -65,12 +65,31 @@ export default function GamesScreen() {
     setRefreshing(false);
   };
 
-  const sections = useMemo(
-    () => groupByDay(slice.games, now).map((g) => ({ key: g.key, title: g.title, data: g.games })),
-    [slice.games, now]
-  );
   const meta = slice.meta;
   const pm = periodMeta(period);
+
+  // Client (2026-10-04): "don't want to see all the games, just show the
+  // games that have high edges" — the board now lists edge games only, not
+  // the full schedule. (This doesn't cut API usage — the engine still has to
+  // scan every game to know which ones qualify — it's purely what's shown.)
+  const highEdgeThreshold = meta?.highEdgeThreshold ?? 5;
+  const highEdgeGameIds = useMemo(
+    () => new Set(
+      edges
+        .filter((e) => e.status === "active" && e.eventId && e.edgePercentage >= highEdgeThreshold)
+        .map((e) => e.eventId as string)
+    ),
+    [edges, highEdgeThreshold]
+  );
+  const boardGames = useMemo(
+    () => slice.games.filter((g) => highEdgeGameIds.has(g.id)),
+    [slice.games, highEdgeGameIds]
+  );
+
+  const sections = useMemo(
+    () => groupByDay(boardGames, now).map((g) => ({ key: g.key, title: g.title, data: g.games })),
+    [boardGames, now]
+  );
 
   const openCell = (game: BoardGame, cell: Cell, edge: { id: string } | null) => {
     if (cell.price === null) return;
@@ -91,7 +110,8 @@ export default function GamesScreen() {
   };
 
   const showSpinner = loading && slice.fetchedAt === 0;
-  const total = slice.games.length;
+  const total = boardGames.length;
+  const scheduledButNoHighEdge = boardGames.length === 0 && slice.games.length > 0;
 
   return (
     <Screen>
@@ -179,13 +199,23 @@ export default function GamesScreen() {
           )}
           ListEmptyComponent={
             <View style={styles.center}>
-              <Ionicons name={meta && !meta.enabled ? "construct-outline" : "calendar-outline"} size={44} color={colors.textMuted} />
+              <Ionicons
+                name={meta && !meta.enabled ? "construct-outline" : scheduledButNoHighEdge ? "flash-outline" : "calendar-outline"}
+                size={44}
+                color={colors.textMuted}
+              />
               <Text style={styles.emptyTitle}>
-                {meta && !meta.enabled ? "This league isn't on the board" : "No games on the board right now"}
+                {meta && !meta.enabled
+                  ? "This league isn't on the board"
+                  : scheduledButNoHighEdge
+                  ? "No high-edge games right now"
+                  : "No games on the board right now"}
               </Text>
               <Text style={styles.emptyHint}>
                 {meta && !meta.enabled
                   ? "It isn't switched on yet — check back soon."
+                  : scheduledButNoHighEdge
+                  ? `Games show up here once we find at least a ${highEdgeThreshold}% edge — you'll get an alert the moment one appears.`
                   : "Games appear as soon as the sportsbooks post lines. Pull down to refresh."}
               </Text>
             </View>
@@ -193,7 +223,7 @@ export default function GamesScreen() {
           ListFooterComponent={
             total ? (
               <Text style={styles.foot}>
-                {total} game{total === 1 ? "" : "s"} · lines from your monitored sportsbooks · tap any price to compare books
+                {total} game{total === 1 ? "" : "s"} with a live edge right now · tap the flagged price for the play
               </Text>
             ) : null
           }
