@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBettingStore } from "../store/bettingStore";
 import { useAuthStore } from "../store/authStore";
 import { registerForPush, unregisterPush } from "../lib/notifications";
-import { enableWebNotifications } from "../lib/webNotify";
+import { subscribeWebPush, unsubscribeWebPush } from "../lib/webPush";
 import { showError } from "../lib/errors";
 import { toast } from "../lib/toast";
 import { webMaxWidth } from "../lib/responsive";
@@ -64,11 +64,13 @@ export default function SettingsScreen() {
     if (!user?.id) return;
     if (enabled) {
       if (Platform.OS === "web") {
-        const result = await enableWebNotifications();
-        if (result === "granted") {
-          toast("success", "Notifications on", "You'll get browser notifications for new edges while this site is open in any tab.");
+        const result = await subscribeWebPush(user.id);
+        if (result === "subscribed") {
+          toast("success", "Notifications on", "You'll get alerts even with this tab closed.");
         } else if (result === "denied") {
           toast("error", "Blocked by browser", "Allow notifications for this site in your browser settings, then try again.");
+        } else if (result === "needs-install") {
+          toast("info", "One more step", "On iPhone, tap Share → Add to Home Screen first — iOS only allows alerts for installed sites.");
         } else {
           toast("info", "Not supported here", "This browser doesn't support notifications — alerts still appear live on the Alerts tab.");
         }
@@ -81,7 +83,8 @@ export default function SettingsScreen() {
         showError("Enable notifications for this app in your phone's settings.", "Permission needed");
       }
     } else {
-      unregisterPush(user.id);
+      if (Platform.OS === "web") unsubscribeWebPush(user.id);
+      else unregisterPush(user.id);
     }
   };
 

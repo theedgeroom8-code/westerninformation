@@ -2,18 +2,7 @@ import { create } from "zustand";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { recommendedWager } from "../lib/kelly";
-import { webNotify } from "../lib/webNotify";
 import { Edge, Bet, BankrollHistory, Settings, AlertItem, Broadcast, FeatureFlags } from "../types";
-
-// Local-time quiet hours check for browser notifications (server push has
-// its own timezone-aware check in the database).
-const inLocalQuietHours = (s: Settings): boolean => {
-  if (!s.quietHoursEnabled || s.quietStart === s.quietEnd) return false;
-  const h = new Date().getHours();
-  return s.quietStart < s.quietEnd
-    ? h >= s.quietStart && h < s.quietEnd
-    : h >= s.quietStart || h < s.quietEnd;
-};
 
 export const ALL_SPORTS = ["NFL", "NBA", "WNBA", "MLB", "NHL", "NCAAF", "NCAAB"];
 
@@ -252,29 +241,17 @@ export const useBettingStore = create<BettingStore>((set, get) => ({
         .on("postgres_changes", { event: "*", schema: "public", table, ...(filter ? { filter } : {}) }, onEvent)
         .subscribe();
 
+    // Real background alerts (even with the tab/browser closed) are now
+    // handled server-side by the web_push_notify_edge/_broadcast triggers,
+    // delivered through the service worker — see lib/webPush.ts. These
+    // realtime subscriptions just keep the open app's own UI live.
     channels = [
-      sub("rt-edges", "edges", undefined, (payload) => {
+      sub("rt-edges", "edges", undefined, () => {
         get().refreshEdges();
         get().refreshAlerts();
-        // Browser notification for fresh edges (hidden tab only; web no-ops elsewhere)
-        const s = get().settings;
-        if (payload?.eventType === "INSERT" && payload.new && s.pushAlerts && !inLocalQuietHours(s)) {
-          const e = payload.new;
-          const odds = e.local_odds > 0 ? `+${e.local_odds}` : `${e.local_odds}`;
-          webNotify(
-            `⚡ ${Number(e.edge_pct).toFixed(1)}% Edge — ${e.sport}`,
-            `${e.matchup}\n${e.rotation_number ? `#${e.rotation_number} · ` : ""}${e.specific_bet} @ ${e.local_book} (${odds})`,
-            `edge-${e.id}`
-          );
-        }
       }),
       sub("rt-alerts", "user_alerts", `user_id=eq.${userId}`, () => get().refreshAlerts()),
-      sub("rt-broadcasts", "broadcasts", undefined, (payload) => {
-        get().refreshBroadcasts();
-        if (payload?.eventType === "INSERT" && payload.new) {
-          webNotify(`📣 ${payload.new.title}`, payload.new.message ?? "", `broadcast-${payload.new.id}`);
-        }
-      }),
+      sub("rt-broadcasts", "broadcasts", undefined, () => get().refreshBroadcasts()),
       sub("rt-bets", "bets", `user_id=eq.${userId}`, () => get().refreshBets()),
       sub("rt-bankroll", "bankrolls", `user_id=eq.${userId}`, () => get().refreshBankroll()),
       sub("rt-history", "bankroll_history", `user_id=eq.${userId}`, () => get().refreshBankroll()),

@@ -8,6 +8,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "../store/authStore";
 import { useBettingStore } from "../store/bettingStore";
 import { registerForPush, attachNotificationDeepLinks } from "../lib/notifications";
+import { registerServiceWorker } from "../lib/webPush";
 import { UpdateGate } from "../components/UpdateGate";
 import { ToastHost } from "../components/admin/ToastHost";
 import { WebNotifyPrompt } from "../components/WebNotifyPrompt";
@@ -31,6 +32,11 @@ export default function RootLayout() {
 
   // Notification tap → deep link (no-op on web)
   useEffect(() => attachNotificationDeepLinks(), []);
+
+  // Registering the service worker itself needs no user gesture (only
+  // requesting Notification permission does) — do it silently on load so
+  // it's ready the moment the user taps "Enable". No-op on native.
+  useEffect(() => { registerServiceWorker(); }, []);
 
   // Deep links always land on the right screen, but Stack.Protected leaves
   // the ADDRESS BAR behind when it swaps an unavailable route for its

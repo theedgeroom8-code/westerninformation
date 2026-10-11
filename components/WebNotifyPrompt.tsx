@@ -1,56 +1,76 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { webNotificationsSupported, enableWebNotifications } from "../lib/webNotify";
+import { webPushSupported, subscribeWebPush, isIOS, isStandalone } from "../lib/webPush";
+import { useAuthStore } from "../store/authStore";
 import { colors, spacing, radius, font, shadow } from "../theme";
 
 const DISMISS_KEY = "win-notify-prompt-dismissed";
 
 /**
- * Website-only banner asking to enable browser notifications. Browsers only
- * show the real permission dialog on a user gesture, so we can't silently
- * request on load — this card provides the gesture. Reappears next session
- * if dismissed with "Later"; disappears forever once granted or denied.
+ * Website-only banner asking to enable real background notifications.
+ * Browsers only show the permission dialog on a user gesture, so we can't
+ * silently request on load — this card provides the gesture.
+ *
+ * iOS/iPadOS Safari can't subscribe to push at all from a plain browser tab
+ * (WebKit, iOS 16.4+) — the site has to be added to the Home Screen first.
+ * There's no API to trigger that dialog, so for iOS we show instructions
+ * instead of an "Enable" button until the site is running standalone.
  */
 export function WebNotifyPrompt() {
-  const [visible, setVisible] = useState(false);
+  const user = useAuthStore((s) => s.user);
+  const [mode, setMode] = useState<"enable" | "ios-install" | null>(null);
 
   useEffect(() => {
-    if (Platform.OS !== "web" || !webNotificationsSupported()) return;
-    if (Notification.permission !== "default") return;
+    if (Platform.OS !== "web") return;
     try {
       if (sessionStorage.getItem(DISMISS_KEY)) return;
     } catch {}
-    setVisible(true);
+
+    if (isIOS() && !isStandalone()) {
+      setMode("ios-install");
+      return;
+    }
+    if (!webPushSupported()) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "default") return;
+    setMode("enable");
   }, []);
 
-  if (!visible) return null;
+  if (!mode) return null;
+
+  const dismiss = () => {
+    try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch {}
+    setMode(null);
+  };
 
   const onEnable = async () => {
-    setVisible(false);
-    await enableWebNotifications();
+    setMode(null);
+    if (user?.id) await subscribeWebPush(user.id);
   };
 
-  const onLater = () => {
-    try { sessionStorage.setItem(DISMISS_KEY, "1"); } catch {}
-    setVisible(false);
-  };
+  const iosInstall = mode === "ios-install";
 
   return (
     <View style={styles.wrap} pointerEvents="box-none">
       <View style={styles.card}>
         <View style={styles.iconWrap}>
-          <Ionicons name="notifications" size={20} color={colors.gold} />
+          <Ionicons name={iosInstall ? "share-outline" : "notifications"} size={20} color={colors.gold} />
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={styles.title}>Turn on notifications</Text>
-          <Text style={styles.sub}>Get alerted the moment a new play is detected — even with this tab in the background.</Text>
+          <Text style={styles.title}>{iosInstall ? "Add to Home Screen for alerts" : "Turn on notifications"}</Text>
+          <Text style={styles.sub}>
+            {iosInstall
+              ? "iPhone only allows alerts for installed sites: tap the Share icon below, then \"Add to Home Screen\"."
+              : "Get alerted the moment a new play is detected — even with this tab closed."}
+          </Text>
         </View>
-        <TouchableOpacity style={styles.enableBtn} onPress={onEnable} activeOpacity={0.85}>
-          <Text style={styles.enableText}>Enable</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.laterBtn} onPress={onLater} activeOpacity={0.7}>
-          <Text style={styles.laterText}>Later</Text>
+        {iosInstall ? null : (
+          <TouchableOpacity style={styles.enableBtn} onPress={onEnable} activeOpacity={0.85}>
+            <Text style={styles.enableText}>Enable</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.laterBtn} onPress={dismiss} activeOpacity={0.7}>
+          <Text style={styles.laterText}>{iosInstall ? "Got it" : "Later"}</Text>
         </TouchableOpacity>
       </View>
     </View>
