@@ -1,6 +1,6 @@
 # Open Items — Games Board, 1H Lines & Alerts
 
-*Updated 2026-10-04 after your last round of feedback. Everything below reflects what's actually
+*Updated 2026-10-11 after your last round of feedback. Everything below reflects what's actually
 built and live right now. Nothing here is blocking — the app works today — but your answers will
 shape what we tune next.*
 
@@ -8,6 +8,23 @@ shape what we tune next.*
 
 ## 1. Resolved by your last feedback (confirming what we built)
 
+- **Real background notifications on the website — fixed a real gap.** You asked us to make sure
+  notifications actually work on phones. While checking, we found the old version only worked
+  while the website tab was still open in the background — if someone closed the tab or locked
+  their phone, nothing could arrive. We confirmed this against Apple's and the browser makers' own
+  documentation rather than guessing, and it affected Android and iPhone both. We've now built the
+  real version — the same kind of notification a native app sends, arriving even with the site
+  fully closed. One iPhone-specific thing worth knowing since you said 99% of your users are on
+  iPhone: Apple only allows this for a site that's been added to the Home Screen (their rule, not
+  ours, introduced in 2023) — a plain Safari tab can never get background alerts, installed or
+  not. We added on-screen instructions guiding iPhone users through that one-time step. This also
+  means real notifications did **not** end up depending on Twilio or the LLC at all — the piece
+  that signs/sends these doesn't require a business account, so it was something we could fully
+  build and turn on today. We tested the full path against the live site end to end (a real device
+  subscribing, a real push actually accepted for delivery, a real alert triggering it automatically)
+  — the one thing we can't test from here is what it visually looks like arriving on an actual
+  iPhone in your hand, so a quick real-phone check on your end (install to Home Screen, turn
+  notifications on in Settings, wait for or trigger an alert) is worth doing when you get a chance.
 - **1H tracking starts earlier.** We were only fetching 1H lines in the last ~12 hours before
   kickoff. That's now a full week out, so if a book posts a 1H line on, say, Tuesday for a Sunday
   game, we pick it up right away instead of waiting until Saturday night. This doesn't cost extra
@@ -50,8 +67,11 @@ shape what we tune next.*
 
 ## 2. Needs a decision from you
 
-**A. Real text messages — the account and a hosting decision.** You said to move forward with
-texting. We've built the half of this that's ours to build without outside accounts: every
+**A. Real text messages — the account and a hosting decision.** Now that real background
+notifications are live (see above), texting is less of a hard requirement and more of a nice
+backup channel — worth doing, just no longer the only way to get a real alert. You said to move
+forward with it, so here's where that stands: we've built the half of this that's ours to build
+without outside accounts: every
 signed-up user already has a phone number on file, and the moment a *high* edge fires (same 5% bar
 as above, now that alerts are filtered), we record exactly who should get a text and exactly what
 it should say. What's left needs two things from outside our code:
