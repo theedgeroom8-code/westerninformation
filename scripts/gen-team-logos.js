@@ -25,6 +25,11 @@ const ALIASES = {
   "UMass Minutemen": "Massachusetts Minutemen",
   "LIU Sharks": "Long Island University Sharks",
 };
+// Same idea, but for college basketball's own name spellings (its roster of
+// schools overlaps with CFB's but isn't identical, so this is separate).
+const CBB_ALIASES = {
+  "UMass Minutemen": "Massachusetts Minutemen",
+};
 
 async function teams(url) {
   const r = await fetch(url);
@@ -36,19 +41,37 @@ async function teams(url) {
 (async () => {
   const nfl = await teams("https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams?limit=100");
   const cfb = await teams("https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams?limit=1000");
+  const nba = await teams("https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams?limit=100");
+  const cbb = await teams("https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams?limit=1000");
 
-  // NFL: [logo slug, board label] — the label follows the sportsbook style "BUF Bills"
-  const nflMap = {};
-  for (const t of nfl) nflMap[norm(t.displayName)] = [t.abbreviation.toLowerCase(), `${t.abbreviation} ${t.shortDisplayName}`];
+  // Pro leagues: [logo slug, board label] — label follows the sportsbook style "BUF Bills"
+  const slugMap = (list) => {
+    const m = {};
+    for (const t of list) m[norm(t.displayName)] = [t.abbreviation.toLowerCase(), `${t.abbreviation} ${t.shortDisplayName}`];
+    return m;
+  };
+  const nflMap = slugMap(nfl);
+  const nbaMap = slugMap(nba);
 
   // College: [ESPN id, short school name] — "Colorado St", "Miami OH", "UMass"
-  const cfbMap = {};
-  for (const t of cfb) cfbMap[norm(t.displayName)] = [Number(t.id), t.shortDisplayName || t.displayName];
-  const aliasMap = {};
-  for (const [from, to] of Object.entries(ALIASES)) {
-    if (cfbMap[norm(to)] === undefined) throw new Error(`alias target missing: ${to}`);
-    aliasMap[norm(from)] = cfbMap[norm(to)];
-  }
+  const idMap = (list) => {
+    const m = {};
+    for (const t of list) m[norm(t.displayName)] = [Number(t.id), t.shortDisplayName || t.displayName];
+    return m;
+  };
+  const cfbMap = idMap(cfb);
+  const cbbMap = idMap(cbb);
+
+  const withAliases = (map, aliases) => {
+    const out = { ...map };
+    for (const [from, to] of Object.entries(aliases)) {
+      if (map[norm(to)] === undefined) throw new Error(`alias target missing: ${to}`);
+      out[norm(from)] = map[norm(to)];
+    }
+    return out;
+  };
+  const cfbFull = withAliases(cfbMap, ALIASES);
+  const cbbFull = withAliases(cbbMap, CBB_ALIASES);
 
   const body = (m) => Object.entries(m).sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`).join("\n");
@@ -60,8 +83,16 @@ const NFL: Record<string, [string, string]> = {
 ${body(nflMap)}
 };
 
-const COLLEGE: Record<string, [number, string]> = {
-${body({ ...cfbMap, ...aliasMap })}
+const NBA: Record<string, [string, string]> = {
+${body(nbaMap)}
+};
+
+const NCAAF: Record<string, [number, string]> = {
+${body(cfbFull)}
+};
+
+const NCAAB: Record<string, [number, string]> = {
+${body(cbbFull)}
 };
 
 export const normTeam = (s: string): string =>
@@ -75,13 +106,22 @@ export function teamLogoUrl(sport: string, teamName: string): string | null {
     const hit = NFL[key];
     return hit ? \`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nfl/500/\${hit[0]}.png&w=72&h=72\` : null;
   }
-  const hit = COLLEGE[key];
+  if (sport === "NBA") {
+    const hit = NBA[key];
+    return hit ? \`https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/\${hit[0]}.png&w=72&h=72\` : null;
+  }
+  if (sport === "NCAAB") {
+    const hit = NCAAB[key];
+    return hit ? \`https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/\${hit[0]}.png&w=72&h=72\` : null;
+  }
+  const hit = NCAAF[key];
   return hit ? \`https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/\${hit[0]}.png&w=72&h=72\` : null;
 }
 
 /** Compact card label — "BUF Bills", "Colorado St" — falling back to the full name. */
 export function teamShortName(sport: string, teamName: string): string {
-  const hit = sport === "NFL" ? NFL[normTeam(teamName)] : COLLEGE[normTeam(teamName)];
+  const key = normTeam(teamName);
+  const hit = sport === "NFL" ? NFL[key] : sport === "NBA" ? NBA[key] : sport === "NCAAB" ? NCAAB[key] : NCAAF[key];
   return hit ? hit[1] : teamName;
 }
 
@@ -96,5 +136,5 @@ export function teamMonogram(teamName: string): { text: string; color: string } 
 `;
   const file = path.join(__dirname, "..", "lib", "teamLogos.ts");
   fs.writeFileSync(file, out);
-  console.log(`wrote ${path.relative(process.cwd(), file)} — ${Object.keys(nflMap).length} NFL, ${Object.keys(cfbMap).length} college, ${Object.keys(aliasMap).length} aliases`);
+  console.log(`wrote ${path.relative(process.cwd(), file)} — ${Object.keys(nflMap).length} NFL, ${Object.keys(nbaMap).length} NBA, ${Object.keys(cfbFull).length} NCAAF, ${Object.keys(cbbFull).length} NCAAB`);
 })().catch((e) => { console.error(e.message); process.exit(1); });

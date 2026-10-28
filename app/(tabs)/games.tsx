@@ -13,10 +13,12 @@ import { useBoardRealtime } from "../../lib/useBoardRealtime";
 import { BoardGame, Cell, Period, PERIODS, periodMeta, groupByDay, timeAgo } from "../../lib/odds";
 import { colors, spacing, radius, font } from "../../theme";
 
-// League tabs. Labels follow the sportsbook screens ("CFB"); keys are our sport ids.
+// League tabs. Labels follow the sportsbook screens ("CFB", "CBB"); keys are our sport ids.
 const LEAGUES = [
   { key: "NFL", label: "NFL" },
   { key: "NCAAF", label: "CFB" },
+  { key: "NBA", label: "NBA" },
+  { key: "NCAAB", label: "CBB" },
 ] as const;
 
 const PERIOD_LABELS = PERIODS.map((p) => p.label);
@@ -31,6 +33,10 @@ export default function GamesScreen() {
   const [period, setPeriod] = useState<Period>("FG");
   const [refreshing, setRefreshing] = useState(false);
   const [now, setNow] = useState(Date.now());
+  // Client (2026-10-28), Option B: default to high-edge-only, with a toggle
+  // to browse the full schedule — "bread and butter" is the push alert, this
+  // toggle is for when they deliberately open the board to look around.
+  const [showAll, setShowAll] = useState(false);
 
   const key = sliceKey(sport, period);
   const slice = useGamesStore((s) => s.slices[key]) ?? emptySlice;
@@ -85,10 +91,11 @@ export default function GamesScreen() {
     () => slice.games.filter((g) => highEdgeGameIds.has(g.id)),
     [slice.games, highEdgeGameIds]
   );
+  const displayGames = showAll ? slice.games : boardGames;
 
   const sections = useMemo(
-    () => groupByDay(boardGames, now).map((g) => ({ key: g.key, title: g.title, data: g.games })),
-    [boardGames, now]
+    () => groupByDay(displayGames, now).map((g) => ({ key: g.key, title: g.title, data: g.games })),
+    [displayGames, now]
   );
 
   const openCell = (game: BoardGame, cell: Cell, edge: { id: string } | null) => {
@@ -110,15 +117,15 @@ export default function GamesScreen() {
   };
 
   const showSpinner = loading && slice.fetchedAt === 0;
-  const total = boardGames.length;
-  const scheduledButNoHighEdge = boardGames.length === 0 && slice.games.length > 0;
+  const total = displayGames.length;
+  const scheduledButNoHighEdge = !showAll && boardGames.length === 0 && slice.games.length > 0;
 
   return (
     <Screen>
       <Header
         title="Games"
-        subtitle="NFL & college football"
-        icon="american-football"
+        subtitle="Football & basketball, college and pro"
+        icon={sport === "NBA" || sport === "NCAAB" ? "basketball" : "american-football"}
         maxWidth={maxW ?? 1160}
       />
 
@@ -149,6 +156,25 @@ export default function GamesScreen() {
               {slice.fetchedAt ? `Updated ${timeAgo(meta?.updatedAt ?? slice.fetchedAt, now)}` : "Loading…"}
             </Text>
           </View>
+        </View>
+
+        <View style={styles.scopeRow}>
+          <TouchableOpacity
+            style={[styles.scopeChip, !showAll && styles.scopeChipOn]}
+            onPress={() => setShowAll(false)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="flash" size={12} color={!showAll ? colors.ink : colors.textMuted} />
+            <Text style={[styles.scopeText, !showAll && styles.scopeTextOn]}>High Edges</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.scopeChip, showAll && styles.scopeChipOn]}
+            onPress={() => setShowAll(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="calendar" size={12} color={showAll ? colors.ink : colors.textMuted} />
+            <Text style={[styles.scopeText, showAll && styles.scopeTextOn]}>All Games</Text>
+          </TouchableOpacity>
         </View>
 
         <FilterBar
@@ -215,7 +241,7 @@ export default function GamesScreen() {
                 {meta && !meta.enabled
                   ? "It isn't switched on yet — check back soon."
                   : scheduledButNoHighEdge
-                  ? `Games show up here once we find at least a ${highEdgeThreshold}% edge — you'll get an alert the moment one appears.`
+                  ? `Games show up here once we find at least a ${highEdgeThreshold}% edge — you'll get an alert the moment one appears. Tap "All Games" above to browse the full schedule instead.`
                   : "Games appear as soon as the sportsbooks post lines. Pull down to refresh."}
               </Text>
             </View>
@@ -223,7 +249,9 @@ export default function GamesScreen() {
           ListFooterComponent={
             total ? (
               <Text style={styles.foot}>
-                {total} game{total === 1 ? "" : "s"} with a live edge right now · tap the flagged price for the play
+                {showAll
+                  ? `${total} game${total === 1 ? "" : "s"} · flagged prices are live edges · tap any price to compare books`
+                  : `${total} game${total === 1 ? "" : "s"} with a live edge right now · tap the flagged price for the play`}
               </Text>
             ) : null
           }
@@ -244,6 +272,15 @@ const styles = StyleSheet.create({
   tabTextOn: { color: colors.text },
   tabBar: { height: 3, borderRadius: 2, backgroundColor: "transparent" },
   tabBarOn: { backgroundColor: colors.gold },
+  scopeRow: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
+  scopeChip: {
+    flexDirection: "row", alignItems: "center", gap: 5,
+    paddingHorizontal: spacing.md, paddingVertical: 7, borderRadius: radius.pill,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+  },
+  scopeChipOn: { backgroundColor: colors.gold, borderColor: colors.gold },
+  scopeText: { color: colors.textMuted, fontSize: font.caption, fontWeight: font.bold },
+  scopeTextOn: { color: colors.ink },
   noteRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   noteText: { flex: 1, color: colors.textMuted, fontSize: font.caption, lineHeight: 15 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 60, paddingHorizontal: spacing.xxl },

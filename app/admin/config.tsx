@@ -332,11 +332,12 @@ export default function AdminConfig() {
           Players only see games with a live high edge (threshold above) — this doesn't change what's fetched, only what's displayed.
         </Text>
         <View style={styles.chips}>
-          {["NFL", "NCAAF"].map((s) => {
+          {["NFL", "NCAAF", "NBA", "NCAAB"].map((s) => {
             const on = boardSports.includes(s);
+            const label = s === "NCAAF" ? "CFB (NCAAF)" : s === "NCAAB" ? "CBB (NCAAB)" : s;
             return (
               <TouchableOpacity key={s} style={[styles.chip, on && styles.chipOn]} onPress={() => toggleList("board_sports", boardSports, s)}>
-                <Text style={[styles.chipText, on && { color: colors.ink }]}>{s === "NCAAF" ? "CFB (NCAAF)" : s}</Text>
+                <Text style={[styles.chipText, on && { color: colors.ink }]}>{label}</Text>
               </TouchableOpacity>
             );
           })}
