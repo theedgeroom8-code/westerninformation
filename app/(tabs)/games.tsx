@@ -19,6 +19,7 @@ const LEAGUES = [
   { key: "NCAAF", label: "CFB" },
   { key: "NBA", label: "NBA" },
   { key: "NCAAB", label: "CBB" },
+  { key: "NHL", label: "NHL" },
 ] as const;
 
 const PERIOD_LABELS = PERIODS.map((p) => p.label);
@@ -124,8 +125,8 @@ export default function GamesScreen() {
     <Screen>
       <Header
         title="Games"
-        subtitle="Football & basketball, college and pro"
-        icon={sport === "NBA" || sport === "NCAAB" ? "basketball" : "american-football"}
+        subtitle="Football, basketball & hockey, college and pro"
+        icon={sport === "NHL" ? "snow" : sport === "NBA" || sport === "NCAAB" ? "basketball" : "american-football"}
         maxWidth={maxW ?? 1160}
       />
 
@@ -138,7 +139,10 @@ export default function GamesScreen() {
               return (
                 <TouchableOpacity
                   key={l.key}
-                  onPress={() => setSport(l.key)}
+                  onPress={() => {
+                    setSport(l.key);
+                    if (l.key === "NHL") setPeriod("FG"); // hockey is game-only, no 1H
+                  }}
                   activeOpacity={0.8}
                   style={styles.tab}
                   accessibilityRole="tab"
@@ -177,15 +181,24 @@ export default function GamesScreen() {
           </TouchableOpacity>
         </View>
 
-        <FilterBar
-          options={PERIOD_LABELS}
-          selected={pm.label}
-          onSelect={(label) => setPeriod((PERIODS.find((p) => p.label === label)?.key ?? "FG") as Period)}
-        />
-        <View style={styles.noteRow}>
-          <Ionicons name="information-circle-outline" size={13} color={colors.textMuted} />
-          <Text style={styles.noteText}>{periodNote()}</Text>
-        </View>
+        {sport === "NHL" ? (
+          <View style={styles.noteRow}>
+            <Ionicons name="information-circle-outline" size={13} color={colors.textMuted} />
+            <Text style={styles.noteText}>Full game only — hockey plays periods, not halves.</Text>
+          </View>
+        ) : (
+          <>
+            <FilterBar
+              options={PERIOD_LABELS}
+              selected={pm.label}
+              onSelect={(label) => setPeriod((PERIODS.find((p) => p.label === label)?.key ?? "FG") as Period)}
+            />
+            <View style={styles.noteRow}>
+              <Ionicons name="information-circle-outline" size={13} color={colors.textMuted} />
+              <Text style={styles.noteText}>{periodNote()}</Text>
+            </View>
+          </>
+        )}
       </View>
 
       {showSpinner ? (

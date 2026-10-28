@@ -69,6 +69,41 @@ const NBA: Record<string, [string, string]> = {
   "washington wizards": ["wsh","WSH Wizards"],
 };
 
+const NHL: Record<string, [string, string]> = {
+  "anaheim ducks": ["ana","ANA Ducks"],
+  "boston bruins": ["bos","BOS Bruins"],
+  "buffalo sabres": ["buf","BUF Sabres"],
+  "calgary flames": ["cgy","CGY Flames"],
+  "carolina hurricanes": ["car","CAR Hurricanes"],
+  "chicago blackhawks": ["chi","CHI Blackhawks"],
+  "colorado avalanche": ["col","COL Avalanche"],
+  "columbus blue jackets": ["cbj","CBJ Blue Jackets"],
+  "dallas stars": ["dal","DAL Stars"],
+  "detroit red wings": ["det","DET Red Wings"],
+  "edmonton oilers": ["edm","EDM Oilers"],
+  "florida panthers": ["fla","FLA Panthers"],
+  "los angeles kings": ["la","LA Kings"],
+  "minnesota wild": ["min","MIN Wild"],
+  "montreal canadiens": ["mtl","MTL Canadiens"],
+  "nashville predators": ["nsh","NSH Predators"],
+  "new jersey devils": ["nj","NJ Devils"],
+  "new york islanders": ["nyi","NYI Islanders"],
+  "new york rangers": ["nyr","NYR Rangers"],
+  "ottawa senators": ["ott","OTT Senators"],
+  "philadelphia flyers": ["phi","PHI Flyers"],
+  "pittsburgh penguins": ["pit","PIT Penguins"],
+  "san jose sharks": ["sj","SJ Sharks"],
+  "seattle kraken": ["sea","SEA Kraken"],
+  "st louis blues": ["stl","STL Blues"],
+  "tampa bay lightning": ["tb","TB Lightning"],
+  "toronto maple leafs": ["tor","TOR Maple Leafs"],
+  "utah mammoth": ["utah","UTAH Mammoth"],
+  "vancouver canucks": ["van","VAN Canucks"],
+  "vegas golden knights": ["vgk","VGK Golden Knights"],
+  "washington capitals": ["wsh","WSH Capitals"],
+  "winnipeg jets": ["wpg","WPG Jets"],
+};
+
 const NCAAF: Record<string, [number, string]> = {
   "abilene christian wildcats": [2000,"Abilene Chrstn"],
   "adams state grizzlies": [2001,"Adams St"],
@@ -1220,6 +1255,10 @@ export function teamLogoUrl(sport: string, teamName: string): string | null {
     const hit = NBA[key];
     return hit ? `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nba/500/${hit[0]}.png&w=72&h=72` : null;
   }
+  if (sport === "NHL") {
+    const hit = NHL[key];
+    return hit ? `https://a.espncdn.com/combiner/i?img=/i/teamlogos/nhl/500/${hit[0]}.png&w=72&h=72` : null;
+  }
   if (sport === "NCAAB") {
     const hit = NCAAB[key];
     return hit ? `https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/${hit[0]}.png&w=72&h=72` : null;
@@ -1231,7 +1270,7 @@ export function teamLogoUrl(sport: string, teamName: string): string | null {
 /** Compact card label — "BUF Bills", "Colorado St" — falling back to the full name. */
 export function teamShortName(sport: string, teamName: string): string {
   const key = normTeam(teamName);
-  const hit = sport === "NFL" ? NFL[key] : sport === "NBA" ? NBA[key] : sport === "NCAAB" ? NCAAB[key] : NCAAF[key];
+  const hit = sport === "NFL" ? NFL[key] : sport === "NBA" ? NBA[key] : sport === "NHL" ? NHL[key] : sport === "NCAAB" ? NCAAB[key] : NCAAF[key];
   return hit ? hit[1] : teamName;
 }
 

@@ -332,7 +332,7 @@ export default function AdminConfig() {
           Players only see games with a live high edge (threshold above) — this doesn't change what's fetched, only what's displayed.
         </Text>
         <View style={styles.chips}>
-          {["NFL", "NCAAF", "NBA", "NCAAB"].map((s) => {
+          {["NFL", "NCAAF", "NBA", "NCAAB", "NHL"].map((s) => {
             const on = boardSports.includes(s);
             const label = s === "NCAAF" ? "CFB (NCAAF)" : s === "NCAAB" ? "CBB (NCAAB)" : s;
             return (
@@ -347,7 +347,7 @@ export default function AdminConfig() {
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>1st-half lines</Text>
             <Text style={styles.hint}>
-              Client only wants Full Game and 1H (2H/1Q–4Q dropped) — fetched game by game, about 3–4 credits per game per refresh now that it's just 1H's markets.
+              Client only wants Full Game and 1H (2H/1Q–4Q dropped) — fetched game by game, about 3–4 credits per game per refresh now that it's just 1H's markets. NHL is always Full Game only (no 1H — hockey plays periods, not halves).
             </Text>
           </View>
           <Switch
