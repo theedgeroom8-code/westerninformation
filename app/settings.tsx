@@ -72,17 +72,19 @@ export default function SettingsScreen() {
     if (!user?.id) return;
     if (enabled) {
       if (Platform.OS === "web") {
-        const result = await subscribeWebPush(user.id);
-        setWebPushReal(result === "subscribed");
-        if (result === "subscribed") {
-          toast("success", "Notifications on", "You'll get alerts even with this tab closed.");
-        } else if (result === "denied") {
-          toast("error", "Blocked by browser", "Allow notifications for this site in your browser settings, then try again.");
-        } else if (result === "needs-install") {
-          toast("info", "One more step", "On iPhone, tap Share → Add to Home Screen first — iOS only allows alerts for installed sites.");
-        } else {
-          toast("info", "Not supported here", "This browser doesn't support notifications — alerts still appear live on the Alerts tab.");
-        }
+        setWebPushReal(true); // optimistic — the switch shouldn't freeze through the permission/network round trip
+        subscribeWebPush(user.id).then((result) => {
+          setWebPushReal(result === "subscribed");
+          if (result === "subscribed") {
+            toast("success", "Notifications on", "You'll get alerts even with this tab closed.");
+          } else if (result === "denied") {
+            toast("error", "Blocked by browser", "Allow notifications for this site in your browser settings, then try again.");
+          } else if (result === "needs-install") {
+            toast("info", "One more step", "On iPhone, tap Share → Add to Home Screen first — iOS only allows alerts for installed sites.");
+          } else {
+            toast("info", "Not supported here", "This browser doesn't support notifications — alerts still appear live on the Alerts tab.");
+          }
+        });
         return;
       }
       const result = await registerForPush(user.id);
