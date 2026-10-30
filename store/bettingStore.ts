@@ -157,6 +157,20 @@ const removeAllChannels = () => {
   channels = [];
 };
 
+// `edges` is a global table the engine writes to in bursts (one row per
+// game/market/book per poll) — without this, each individual row change
+// fired its own immediate refetch, which looked like the Alerts tab
+// "refreshing continuously" during active polling. lib/useBoardRealtime.ts
+// already debounces the games board for the same reason; this gives every
+// realtime-triggered refresh here the same treatment.
+const debounced = (fn: () => void, ms = 1000) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return () => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(fn, ms);
+  };
+};
+
 export const useBettingStore = create<BettingStore>((set, get) => ({
   loading: true,
   userId: null,
@@ -246,11 +260,11 @@ export const useBettingStore = create<BettingStore>((set, get) => ({
     // delivered through the service worker — see lib/webPush.ts. These
     // realtime subscriptions just keep the open app's own UI live.
     channels = [
-      sub("rt-edges", "edges", undefined, () => {
+      sub("rt-edges", "edges", undefined, debounced(() => {
         get().refreshEdges();
         get().refreshAlerts();
-      }),
-      sub("rt-alerts", "user_alerts", `user_id=eq.${userId}`, () => get().refreshAlerts()),
+      })),
+      sub("rt-alerts", "user_alerts", `user_id=eq.${userId}`, debounced(() => get().refreshAlerts())),
       sub("rt-broadcasts", "broadcasts", undefined, () => get().refreshBroadcasts()),
       sub("rt-bets", "bets", `user_id=eq.${userId}`, () => get().refreshBets()),
       sub("rt-bankroll", "bankrolls", `user_id=eq.${userId}`, () => get().refreshBankroll()),
