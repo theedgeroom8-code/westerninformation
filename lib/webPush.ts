@@ -93,6 +93,16 @@ export async function subscribeWebPush(userId: string): Promise<WebPushResult> {
     { onConflict: "user_id,endpoint" }
   );
   if (error) return "unsupported";
+
+  // The server-side triggers (web_push_notify_edge/_broadcast) only send to
+  // rows where user_settings.push_alerts is true — a subscription existing
+  // here isn't enough on its own. This flag can only otherwise be flipped by
+  // the Settings toggle, so a device subscribed through THIS banner (not
+  // Settings) would stay invisible to the server forever if it was ever off.
+  // Found exactly this split-brain state on a real account: 5 real
+  // subscriptions, push_alerts still false from an earlier toggle.
+  await supabase.from("user_settings").update({ push_alerts: true }).eq("user_id", userId);
+
   return "subscribed";
 }
 
