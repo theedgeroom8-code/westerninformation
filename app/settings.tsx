@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, Switch, TouchableOpacity, StyleSheet, Alert, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBettingStore } from "../store/bettingStore";
 import { useAuthStore } from "../store/authStore";
 import { registerForPush, unregisterPush } from "../lib/notifications";
-import { subscribeWebPush, unsubscribeWebPush } from "../lib/webPush";
+import { subscribeWebPush, unsubscribeWebPush, hasWebPushSubscription } from "../lib/webPush";
 import { showError } from "../lib/errors";
 import { toast } from "../lib/toast";
 import { webMaxWidth } from "../lib/responsive";
@@ -58,6 +58,14 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { settings, updateSettings } = useBettingStore();
   const user = useAuthStore((s) => s.user);
+  // The DB flag (settings.pushAlerts) defaults to true for every new user —
+  // it doesn't mean a browser subscription actually exists. Real edges fired
+  // with zero stored subscriptions while this toggle quietly showed "on", so
+  // on web the switch reflects the real subscription, not just the flag.
+  const [webPushReal, setWebPushReal] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (Platform.OS === "web" && user?.id) hasWebPushSubscription(user.id).then(setWebPushReal);
+  }, [user?.id]);
 
   const onPushToggle = async (enabled: boolean) => {
     await updateSettings({ pushAlerts: enabled });
@@ -65,6 +73,7 @@ export default function SettingsScreen() {
     if (enabled) {
       if (Platform.OS === "web") {
         const result = await subscribeWebPush(user.id);
+        setWebPushReal(result === "subscribed");
         if (result === "subscribed") {
           toast("success", "Notifications on", "You'll get alerts even with this tab closed.");
         } else if (result === "denied") {
@@ -83,7 +92,7 @@ export default function SettingsScreen() {
         showError("Enable notifications for this app in your phone's settings.", "Permission needed");
       }
     } else {
-      if (Platform.OS === "web") unsubscribeWebPush(user.id);
+      if (Platform.OS === "web") { unsubscribeWebPush(user.id); setWebPushReal(false); }
       else unregisterPush(user.id);
     }
   };
@@ -177,8 +186,14 @@ export default function SettingsScreen() {
           <SectionTitle icon="notifications" label="ALERT DELIVERY" />
           <View style={styles.card}>
             <ToggleRow icon="notifications-outline" label="Push Notifications"
-              sub={Platform.OS === "web" ? "Browser notifications for new edges" : "Alert your phone even when the app is closed"}
-              value={settings.pushAlerts} onChange={onPushToggle} />
+              sub={
+                Platform.OS === "web"
+                  ? webPushReal === false
+                    ? "Not active on this device yet — tap to turn on"
+                    : "Browser notifications for new edges"
+                  : "Alert your phone even when the app is closed"
+              }
+              value={Platform.OS === "web" ? !!webPushReal : settings.pushAlerts} onChange={onPushToggle} />
             <ToggleRow icon="chatbox-ellipses-outline" label="SMS Alerts" sub="Also send edge alerts by text message"
               value={settings.smsAlerts} onChange={(v) => updateSettings({ smsAlerts: v })} />
             {/* In-app alerts are the realtime inbox — always available */}

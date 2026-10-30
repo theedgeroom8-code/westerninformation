@@ -96,6 +96,29 @@ export async function subscribeWebPush(userId: string): Promise<WebPushResult> {
   return "subscribed";
 }
 
+/** Ground truth for "is this device actually going to get pushes" — checking
+ *  Notification.permission alone isn't enough: permission can be "granted"
+ *  while the stored subscription row is gone (browser data cleared, endpoint
+ *  revoked, etc.), which is exactly the gap that let edges fire with nobody
+ *  subscribed to receive them. */
+export async function hasWebPushSubscription(userId: string): Promise<boolean> {
+  if (!webPushSupported()) return false;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = await reg?.pushManager.getSubscription();
+    if (!sub) return false;
+    const { data } = await supabase
+      .from("web_push_subscriptions")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("endpoint", sub.endpoint)
+      .maybeSingle();
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
 /** Called when the user turns push off in settings. */
 export async function unsubscribeWebPush(userId: string) {
   if (!webPushSupported()) return;
